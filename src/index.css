@@ -1,0 +1,324 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 152 47% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 152 47% 45%;
+    --radius: 0.75rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 152 47% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 152 47% 45%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: 'Roboto', ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .dark input[type="date"],
+  .dark input[type="datetime-local"],
+  .dark input[type="time"] {
+    color-scheme: dark;
+  }
+
+  .dark input[type="date"]::-webkit-calendar-picker-indicator,
+  .dark input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+  .dark input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(200%);
+    opacity: 1;
+  }
+}
+
+/* ─── Page Transition Animations ─── */
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pageExit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.page-enter {
+  animation: pageEnter 0.25s ease-out both;
+}
+
+.page-exit {
+  animation: pageExit 0.15s ease-in both;
+}
+
+/* View content transition (for tab switches within a page) */
+@keyframes viewFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.view-enter {
+  animation: viewFadeIn 0.2s ease-out both;
+}
+
+/* ─── Micro-Animations ─── */
+
+/* Universal touch feedback for interactive elements */
+.touch-feedback {
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+.touch-feedback:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+
+/* Card press effect */
+.card-press {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.card-press:active {
+  transform: scale(0.98);
+  box-shadow: none;
+}
+
+/* Standard fade animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes zoom-in {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes zoom-out {
+  from { transform: scale(1); opacity: 1; }
+  to { transform: scale(0.95); opacity: 0; }
+}
+
+.animate-in {
+  animation: fade-in 0.2s ease-in-out;
+}
+
+.animate-out {
+  animation: fade-out 0.2s ease-in-out;
+}
+
+/* ─── Floating Labels System ─── */
+.float-group {
+  position: relative;
+}
+
+.float-input,
+.float-textarea,
+.float-select {
+  width: 100%;
+  padding: 20px 14px 8px;
+  min-height: 52px;
+  background: #f9fafb;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 15px;
+  color: #1f2937;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.float-input:focus,
+.float-textarea:focus,
+.float-select:focus {
+  border-color: #3eaa76;
+  box-shadow: 0 0 0 3px rgba(62, 170, 118, 0.15);
+}
+
+.float-label {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: #9ca3af;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  background: transparent;
+  white-space: nowrap;
+}
+
+/* Float up when input has value or is focused */
+.float-input:focus ~ .float-label,
+.float-input:not(:placeholder-shown) ~ .float-label,
+.float-textarea:focus ~ .float-label,
+.float-textarea:not(:placeholder-shown) ~ .float-label {
+  top: 6px;
+  transform: translateY(0);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b7280;
+}
+
+/* Focus color for label */
+.float-input:focus ~ .float-label,
+.float-textarea:focus ~ .float-label,
+.float-select:focus ~ .float-label {
+  color: #3eaa76;
+}
+
+/* ── Glass variant for auth pages ── */
+.float-input--glass {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: transparent;
+}
+
+.float-input--glass:focus {
+  border-color: transparent;
+  box-shadow: 0 0 0 2px #3eaa76;
+}
+
+/* ── Icon variant (inputs with left icon) ── */
+.float-group--icon .float-label {
+  left: 48px;
+}
+
+.float-group--icon .float-input:focus ~ .float-label,
+.float-group--icon .float-input:not(:placeholder-shown) ~ .float-label {
+  left: 48px;
+}
+
+/* Icon element */
+.float-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  pointer-events: none;
+  transition: opacity 0.2s ease, top 0.2s ease;
+  line-height: 0;
+}
+
+/* When input has value or focus, hide icon */
+.float-input:focus ~ .float-icon,
+.float-input:not(:placeholder-shown) ~ .float-icon {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Dark mode for floating labels ── */
+:where(.dark, .dark *) .float-input,
+:where(.dark, .dark *) .float-textarea,
+:where(.dark, .dark *) .float-select {
+  background: #111827;
+  border-color: #374151;
+  color: #f3f4f6;
+}
+
+:where(.dark, .dark *) .float-input:focus,
+:where(.dark, .dark *) .float-textarea:focus,
+:where(.dark, .dark *) .float-select:focus {
+  border-color: #3eaa76;
+  box-shadow: 0 0 0 3px rgba(62, 170, 118, 0.2);
+}
+
+:where(.dark, .dark *) .float-label {
+  color: #6b7280;
+}
+
+:where(.dark, .dark *) .float-input:focus ~ .float-label,
+:where(.dark, .dark *) .float-input:not(:placeholder-shown) ~ .float-label,
+:where(.dark, .dark *) .float-textarea:focus ~ .float-label,
+:where(.dark, .dark *) .float-textarea:not(:placeholder-shown) ~ .float-label {
+  color: #9ca3af;
+}
+
+:where(.dark, .dark *) .float-input:focus ~ .float-label,
+:where(.dark, .dark *) .float-textarea:focus ~ .float-label,
+:where(.dark, .dark *) .float-select:focus ~ .float-label {
+  color: #3eaa76;
+}
+
+:where(.dark, .dark *) .float-input--glass {
+  background: rgba(17, 24, 39, 0.9);
+  border-color: transparent;
+}
+
+/* Hide Ionic tabs when specific views are open */
+body.hide-tabs ion-footer {
+  display: none !important;
+}
