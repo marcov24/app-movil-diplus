@@ -7,7 +7,7 @@ import { createApiClient } from '../utils/apiClient';
 import { getClientByCode, getClientMqttStatus, getHistoricalData } from '../utils/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Activity, AlertTriangle, Bell, ChevronUp, ChevronDown, X, Power, PowerOff, ArrowLeft, WifiOff, Wifi, MapPin } from 'lucide-react';
+import { Activity, AlertTriangle, Bell, ChevronUp, ChevronDown, X, Power, PowerOff, ArrowLeft, WifiOff, Wifi, MapPin, Loader2 } from 'lucide-react';
 import { IonButton, IonSelect, IonSelectOption } from '@ionic/react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
@@ -449,8 +449,13 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-muted-foreground">Cargando...</div>
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <div className="relative">
+          <div className="absolute inset-0 bg-[#3eaa76]/30 rounded-full blur-xl animate-pulse -m-2"></div>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 dark:border-gray-700 relative z-10 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 text-[#3eaa76] animate-spin" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -474,30 +479,26 @@ export default function Dashboard() {
       <div className="w-screen bg-background relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
 
         {/* Top row: Client Back Button with bottom border */}
-        {clientCode && (
-          <div className="w-full flex items-center gap-2 px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 pt-2 pb-3 border-b border-border">
-            <button
-              onClick={() => history.push('/config')}
-              className="p-1 -ml-1 rounded-lg text-[#3eaa76] hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors"
-              title="Volver a los clientes"
-            >
-              <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-            </button>
-            <h1 className="text-lg sm:text-xl font-bold text-[#3eaa76] capitalize">
-              {clientName || clientCode}
+        <div className="w-full flex items-center justify-between gap-1 sm:gap-3 px-3 sm:px-6 md:px-8 lg:px-12 xl:px-16 pt-2 pb-3 border-b border-border">
+          <div className="flex items-center gap-1 sm:gap-2 min-w-0 overflow-hidden flex-shrink border-transparent">
+            {clientCode && (
+              <button
+                onClick={() => history.push('/config')}
+                className="p-1 -ml-1 rounded-lg flex-shrink-0 text-[#3eaa76] hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors"
+                title="Volver a los clientes"
+              >
+                <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+              </button>
+            )}
+            <h1 className="text-[17px] sm:text-xl font-bold text-[#3eaa76] capitalize truncate">
+              {clientName || clientCode || 'Dashboard'}
             </h1>
           </div>
-        )}
 
-        <div className="w-full flex flex-col gap-3 px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 pt-3 pb-3">
-          {/* Dashboard Title & Badge */}
-          <div className="flex justify-between items-center gap-2">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-foreground leading-none">
-              Dashboard SCADA
-            </h2>
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             {mqttStatus && (
               <span className={cn(
-                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border",
+                "inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full text-[9px] sm:text-xs font-medium border",
                 mqttStatus.isConnected
                   ? "bg-green-50 text-[#3eaa76] border-green-200 dark:bg-green-950/30 dark:border-green-800/50"
                   : mqttStatus.isActive
@@ -506,43 +507,43 @@ export default function Dashboard() {
               )}>
                 {mqttStatus.isConnected ? (
                   <>
-                    <Wifi className="w-3.5 h-3.5" />
+                    <Wifi className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     <span>MQTT Conectado</span>
                   </>
                 ) : mqttStatus.isActive ? (
                   <>
-                    <WifiOff className="w-3.5 h-3.5" />
+                    <WifiOff className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     <span>MQTT Desconectado</span>
                   </>
                 ) : (
                   <>
-                    <WifiOff className="w-3.5 h-3.5" />
+                    <WifiOff className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     <span>MQTT Inactivo</span>
                   </>
                 )}
               </span>
             )}
-          </div>
 
-          {/* Alertas button (full width) */}
-          <div className="w-full mb-1">
-            <Link to={clientCode ? `/${clientCode}/alerts` : '/alerts'} className="block w-full">
+            <Link to={clientCode ? `/${clientCode}/alerts` : '/alerts'} className="block">
               <IonButton
                 fill="clear"
-                className="w-full md:w-auto rounded-xl border border-green-500 text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20 transition-all m-0 h-auto min-h-[44px] normal-case text-sm font-medium"
+                className="m-0 h-[28px] sm:h-auto sm:min-h-[36px] w-[28px] sm:w-auto px-0 sm:px-4 rounded-lg sm:rounded-xl border border-[#3eaa76] text-[#3eaa76] hover:bg-green-50 dark:text-green-400 dark:border-green-400 dark:hover:bg-green-950/30 transition-all normal-case text-sm font-semibold flex items-center justify-center"
                 style={{
                   '--border-radius': '8px',
-                  '--padding-start': '16px',
-                  '--padding-end': '16px',
-                  '--padding-top': '8px',
-                  '--padding-bottom': '8px'
+                  '--padding-start': '0px',
+                  '--padding-end': '0px',
+                  '--padding-top': '0px',
+                  '--padding-bottom': '0px'
                 }}
               >
-                <Bell className="w-4 h-4 mr-1" />
-                <span className="font-semibold tracking-wide">Alertas</span>
+                <Bell className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-1.5" />
+                <span className="hidden sm:inline">Alertas</span>
               </IonButton>
             </Link>
           </div>
+        </div>
+
+        <div className="w-full flex flex-col gap-3 px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 pt-3 pb-3">
 
           {/* Area Filter */}
           {structure.length > 0 && (

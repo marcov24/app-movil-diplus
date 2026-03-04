@@ -35,10 +35,10 @@ export default function Config() {
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Error al cargar configuración';
       // Check if it's an MQTT connection/subscription error
-      if (errorMessage.toLowerCase().includes('mqtt') || 
-          errorMessage.toLowerCase().includes('connection') || 
-          errorMessage.toLowerCase().includes('subscription') ||
-          errorMessage.toLowerCase().includes('broker')) {
+      if (errorMessage.toLowerCase().includes('mqtt') ||
+        errorMessage.toLowerCase().includes('connection') ||
+        errorMessage.toLowerCase().includes('subscription') ||
+        errorMessage.toLowerCase().includes('broker')) {
         showError(errorMessage, 7000);
       } else {
         setMessage({ type: 'error', text: errorMessage });
@@ -64,11 +64,11 @@ export default function Config() {
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Error al guardar configuración';
       // Check if it's an MQTT connection/subscription error
-      if (errorMessage.toLowerCase().includes('mqtt') || 
-          errorMessage.toLowerCase().includes('connection') || 
-          errorMessage.toLowerCase().includes('subscription') ||
-          errorMessage.toLowerCase().includes('broker') ||
-          errorMessage.toLowerCase().includes('conectar')) {
+      if (errorMessage.toLowerCase().includes('mqtt') ||
+        errorMessage.toLowerCase().includes('connection') ||
+        errorMessage.toLowerCase().includes('subscription') ||
+        errorMessage.toLowerCase().includes('broker') ||
+        errorMessage.toLowerCase().includes('conectar')) {
         showError(errorMessage, 7000);
       } else {
         setMessage({ type: 'error', text: errorMessage });
@@ -89,7 +89,12 @@ export default function Config() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="relative">
+          <div className="absolute inset-0 bg-[#3eaa76]/30 rounded-full blur-xl animate-pulse -m-2"></div>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 dark:border-gray-700 relative z-10 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 text-[#3eaa76] animate-spin" />
+          </div>
+        </div>
       </div>
     );
   }

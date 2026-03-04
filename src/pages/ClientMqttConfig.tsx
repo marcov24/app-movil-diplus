@@ -37,7 +37,7 @@ export default function ClientMqttConfig() {
       const response = await getClientByCode(clientCode!);
       const client = response.data;
       setClientId(client._id);
-      
+
       if (client.mqttConfig) {
         setConfig({
           brokerUrl: client.mqttConfig.brokerUrl || '',
@@ -51,10 +51,10 @@ export default function ClientMqttConfig() {
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Error al cargar configuración';
       // Check if it's an MQTT connection/subscription error
-      if (errorMessage.toLowerCase().includes('mqtt') || 
-          errorMessage.toLowerCase().includes('connection') || 
-          errorMessage.toLowerCase().includes('subscription') ||
-          errorMessage.toLowerCase().includes('broker')) {
+      if (errorMessage.toLowerCase().includes('mqtt') ||
+        errorMessage.toLowerCase().includes('connection') ||
+        errorMessage.toLowerCase().includes('subscription') ||
+        errorMessage.toLowerCase().includes('broker')) {
         showError(errorMessage, 7000);
       } else {
         setMessage({ type: 'error', text: errorMessage });
@@ -67,22 +67,22 @@ export default function ClientMqttConfig() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!clientId) return;
-    
+
     try {
       setSaving(true);
       setMessage(null);
-      
+
       // Validate required fields if isActive is true
       if (config.isActive && !config.brokerUrl) {
         setMessage({ type: 'error', text: 'La URL del broker es requerida cuando MQTT está activo' });
         setSaving(false);
         return;
       }
-      
+
       await updateClient(clientId, {
         mqttConfig: config
       });
-      
+
       // If isActive is true, the server will automatically connect MQTT
       if (config.isActive) {
         showSuccess('Configuración guardada exitosamente. Conectando MQTT...', 3000);
@@ -97,11 +97,11 @@ export default function ClientMqttConfig() {
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Error al guardar configuración';
       // Check if it's an MQTT connection/subscription error
-      if (errorMessage.toLowerCase().includes('mqtt') || 
-          errorMessage.toLowerCase().includes('connection') || 
-          errorMessage.toLowerCase().includes('subscription') ||
-          errorMessage.toLowerCase().includes('broker') ||
-          errorMessage.toLowerCase().includes('conectar')) {
+      if (errorMessage.toLowerCase().includes('mqtt') ||
+        errorMessage.toLowerCase().includes('connection') ||
+        errorMessage.toLowerCase().includes('subscription') ||
+        errorMessage.toLowerCase().includes('broker') ||
+        errorMessage.toLowerCase().includes('conectar')) {
         showError(errorMessage, 7000);
       } else {
         setMessage({ type: 'error', text: errorMessage });
@@ -123,7 +123,12 @@ export default function ClientMqttConfig() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="relative">
+          <div className="absolute inset-0 bg-[#3eaa76]/30 rounded-full blur-xl animate-pulse -m-2"></div>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 dark:border-gray-700 relative z-10 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 text-[#3eaa76] animate-spin" />
+          </div>
+        </div>
       </div>
     );
   }
