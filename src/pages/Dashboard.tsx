@@ -7,11 +7,12 @@ import { createApiClient } from '../utils/apiClient';
 import { getClientByCode, getClientMqttStatus, getHistoricalData } from '../utils/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Activity, AlertTriangle, Bell, ChevronUp, ChevronDown, X, Power, PowerOff, ArrowLeft, WifiOff, Wifi, MapPin, Loader2 } from 'lucide-react';
+import { Activity, AlertTriangle, Bell, ChevronUp, ChevronDown, X, Power, PowerOff, ArrowLeft, WifiOff, Wifi, MapPin, Loader2, Plus, Settings } from 'lucide-react';
 import { IonButton, IonSelect, IonSelectOption } from '@ionic/react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { AreaChart, Area as RechartsArea, ResponsiveContainer } from 'recharts';
+import Areas from './Areas';
 
 interface Area {
   _id: string;
@@ -71,6 +72,7 @@ export default function Dashboard() {
   const [setpoints, setSetpoints] = useState<Record<string, Setpoint[]>>({});
   const [loading, setLoading] = useState(true);
   const [notificationsExpanded, setNotificationsExpanded] = useState(false);
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [notificationsVisible, setNotificationsVisible] = useState(true);
   const [mqttStatus, setMqttStatus] = useState<{ isConnected: boolean; isActive: boolean } | null>(null);
   const [clientId, setClientId] = useState<string | null>(null);
@@ -480,7 +482,8 @@ export default function Dashboard() {
 
         {/* Top row: Client Back Button with bottom border */}
         <div className="w-full flex items-center justify-between gap-1 sm:gap-3 px-3 sm:px-6 md:px-8 lg:px-12 xl:px-16 pt-2 pb-3 border-b border-border">
-          <div className="flex items-center gap-1 sm:gap-2 min-w-0 overflow-hidden flex-shrink border-transparent">
+          {/* Left: back arrow + name + MQTT status */}
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 overflow-hidden flex-1">
             {clientCode && (
               <button
                 onClick={() => history.push('/config')}
@@ -493,12 +496,9 @@ export default function Dashboard() {
             <h1 className="text-[17px] sm:text-xl font-bold text-[#3eaa76] capitalize truncate">
               {clientName || clientCode || 'Dashboard'}
             </h1>
-          </div>
-
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             {mqttStatus && (
               <span className={cn(
-                "inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full text-[9px] sm:text-xs font-medium border",
+                "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-medium border shrink-0",
                 mqttStatus.isConnected
                   ? "bg-green-50 text-[#3eaa76] border-green-200 dark:bg-green-950/30 dark:border-green-800/50"
                   : mqttStatus.isActive
@@ -523,7 +523,10 @@ export default function Dashboard() {
                 )}
               </span>
             )}
+          </div>
 
+          {/* Right: Alerts square button */}
+          <div className="flex items-center flex-shrink-0">
             <Link to={clientCode ? `/${clientCode}/alerts` : '/alerts'} className="block">
               <IonButton
                 fill="clear"
@@ -567,6 +570,24 @@ export default function Dashboard() {
                 ))}
               </IonSelect>
             </div>
+          )}
+
+          {/* Config Button */}
+          {clientCode && (
+            <IonButton
+              onClick={() => setIsConfigModalOpen(true)}
+              className="w-full mt-1 flex items-center gap-3 px-4 py-3 rounded-2xl bg-gradient-to-r from-[#3eaa76] to-[#52c98f] text-white shadow-[0_4px_14px_0_rgba(62,170,118,0.35)] hover:shadow-[0_6px_20px_rgba(62,170,118,0.45)] active:scale-[0.98] transition-all duration-200 normal-case"
+              style={{ '--background': 'transparent', '--box-shadow': 'none', '--padding-start': '0', '--padding-end': '0', '--padding-top': '0', '--padding-bottom': '0', 'width': '100%' }}
+            >
+              <div className="bg-white/20 rounded-xl p-2 shrink-0">
+                <Settings className="w-4 h-4 text-white" />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="text-sm font-bold leading-tight">Configurar Áreas</p>
+                <p className="text-[11px] text-white/75 leading-tight mt-0.5">Gestionar áreas, ubicaciones, parámetros y setpoints</p>
+              </div>
+              <Plus className="w-4 h-4 text-white/80 shrink-0" />
+            </IonButton>
           )}
         </div>
       </div>
@@ -804,151 +825,196 @@ export default function Dashboard() {
       </div>
 
       {/* Floating Notifications Panel */}
-      {alerts.length > 0 && notificationsVisible && (
-        <div className={cn(
-          "fixed z-50 transition-all duration-300",
-          notificationsExpanded
-            ? "bottom-4 right-2 sm:right-4 w-[calc(100vw-1rem)] sm:w-96 max-w-[calc(100vw-2rem)]"
-            : "bottom-4 right-4 w-auto"
-        )}>
+      {
+        alerts.length > 0 && notificationsVisible && (
           <div className={cn(
-            "bg-background rounded-lg shadow-2xl border-2 border-[#F97316] dark:border-[#F97316]/70 transition-all duration-300 overflow-hidden",
-            notificationsExpanded ? "max-h-[60vh] sm:max-h-[500px]" : ""
+            "fixed z-50 transition-all duration-300",
+            notificationsExpanded
+              ? "bottom-4 right-2 sm:right-4 w-[calc(100vw-1rem)] sm:w-96 max-w-[calc(100vw-2rem)]"
+              : "bottom-4 right-4 w-auto"
           )}>
-            {/* Header */}
-            <div
-              className="bg-[#F97316]/10 dark:bg-[#F97316]/20 px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between cursor-pointer border-b border-[#F97316]/20 dark:border-[#F97316]/30"
-              onClick={() => setNotificationsExpanded(!notificationsExpanded)}
-            >
-              <div className="flex items-center space-x-2 min-w-0">
-                <div className="relative">
-                  <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-[#F97316] flex-shrink-0" />
-                  {alerts.length > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                      {alerts.length > 9 ? '9+' : alerts.length}
+            <div className={cn(
+              "bg-background rounded-lg shadow-2xl border-2 border-[#F97316] dark:border-[#F97316]/70 transition-all duration-300 overflow-hidden",
+              notificationsExpanded ? "max-h-[60vh] sm:max-h-[500px]" : ""
+            )}>
+              {/* Header */}
+              <div
+                className="bg-[#F97316]/10 dark:bg-[#F97316]/20 px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between cursor-pointer border-b border-[#F97316]/20 dark:border-[#F97316]/30"
+                onClick={() => setNotificationsExpanded(!notificationsExpanded)}
+              >
+                <div className="flex items-center space-x-2 min-w-0">
+                  <div className="relative">
+                    <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-[#F97316] flex-shrink-0" />
+                    {alerts.length > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                        {alerts.length > 9 ? '9+' : alerts.length}
+                      </span>
+                    )}
+                  </div>
+                  {notificationsExpanded && (
+                    <span className="text-sm sm:text-base font-semibold text-[#F97316] truncate">
+                      Alertas ({alerts.length})
                     </span>
                   )}
                 </div>
-                {notificationsExpanded && (
-                  <span className="text-sm sm:text-base font-semibold text-[#F97316] truncate">
-                    Alertas ({alerts.length})
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center space-x-1.5 flex-shrink-0">
-                {notificationsExpanded && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 hover:bg-[#F97316]/20"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setNotificationsVisible(false);
-                    }}
-                  >
-                    <X className="w-3.5 h-3.5 text-[#F97316]" />
-                  </Button>
-                )}
-                {notificationsExpanded ? (
-                  <ChevronDown className="w-4 h-4 text-[#F97316]" />
-                ) : (
-                  <ChevronUp className="w-4 h-4 text-[#F97316]" />
-                )}
-              </div>
-            </div>
-
-            {/* Content */}
-            {notificationsExpanded && (
-              <div className="max-h-[calc(60vh-3.5rem)] sm:max-h-[450px] overflow-y-auto overscroll-contain">
-                <div className="p-2 sm:p-3 space-y-2">
-                  {alerts.slice(0, 5).map((alert) => {
-                    const parameter = alert.parameterId;
-                    return (
-                      <div
-                        key={alert._id}
-                        className={cn(
-                          "p-2 sm:p-2.5 rounded-lg border text-xs sm:text-sm transition-all hover:shadow-md",
-                          alert.condition === 'critical' ? 'bg-red-50/50 dark:bg-red-950/30 border-red-200 dark:border-red-800' :
-                            alert.condition === 'warning' ? 'bg-yellow-50/50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-800' :
-                              'bg-blue-50/50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800'
-                        )}
-                      >
-                        <div className="flex items-start space-x-2">
-                          <AlertTriangle className={cn(
-                            "w-4 h-4 mt-0.5 flex-shrink-0",
-                            alert.condition === 'critical' ? 'text-red-600' :
-                              alert.condition === 'warning' ? 'text-yellow-600' :
-                                'text-blue-600'
-                          )} />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center space-x-2 mb-1 flex-wrap gap-1">
-                              <span className={cn(
-                                "text-[10px] sm:text-xs font-semibold px-1.5 py-0.5 rounded",
-                                alert.condition === 'critical' ? 'bg-red-200 text-red-800' :
-                                  alert.condition === 'warning' ? 'bg-yellow-200 text-yellow-800' :
-                                    'bg-blue-200 text-blue-800'
-                              )}>
-                                {alert.condition === 'critical' ? 'CRIT' : alert.condition === 'warning' ? 'WARN' : 'INFO'}
-                              </span>
-                              {parameter && (
-                                <span className="text-xs sm:text-sm font-medium text-foreground truncate">
-                                  {parameter.name}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs sm:text-sm text-foreground line-clamp-2 mb-1 leading-tight">
-                              {alert.message}
-                            </p>
-                            <p className="text-[10px] sm:text-xs text-muted-foreground">
-                              {new Date(alert.timestamp).toLocaleTimeString('es-ES', {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {alerts.length > 5 && (
-                    <Link to={clientCode ? `/${clientCode}/alerts` : '/alerts'} className="block">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full text-xs sm:text-sm h-8 sm:h-9 border-[#F97316] text-[#F97316] hover:bg-[#F97316] hover:text-white"
-                      >
-                        Ver todas ({alerts.length})
-                      </Button>
-                    </Link>
+                <div className="flex items-center space-x-1.5 flex-shrink-0">
+                  {notificationsExpanded && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 hover:bg-[#F97316]/20"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setNotificationsVisible(false);
+                      }}
+                    >
+                      <X className="w-3.5 h-3.5 text-[#F97316]" />
+                    </Button>
+                  )}
+                  {notificationsExpanded ? (
+                    <ChevronDown className="w-4 h-4 text-[#F97316]" />
+                  ) : (
+                    <ChevronUp className="w-4 h-4 text-[#F97316]" />
                   )}
                 </div>
               </div>
-            )}
+
+              {/* Content */}
+              {notificationsExpanded && (
+                <div className="max-h-[calc(60vh-3.5rem)] sm:max-h-[450px] overflow-y-auto overscroll-contain">
+                  <div className="p-2 sm:p-3 space-y-2">
+                    {alerts.slice(0, 5).map((alert) => {
+                      const parameter = alert.parameterId;
+                      return (
+                        <div
+                          key={alert._id}
+                          className={cn(
+                            "p-2 sm:p-2.5 rounded-lg border text-xs sm:text-sm transition-all hover:shadow-md",
+                            alert.condition === 'critical' ? 'bg-red-50/50 dark:bg-red-950/30 border-red-200 dark:border-red-800' :
+                              alert.condition === 'warning' ? 'bg-yellow-50/50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-800' :
+                                'bg-blue-50/50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800'
+                          )}
+                        >
+                          <div className="flex items-start space-x-2">
+                            <AlertTriangle className={cn(
+                              "w-4 h-4 mt-0.5 flex-shrink-0",
+                              alert.condition === 'critical' ? 'text-red-600' :
+                                alert.condition === 'warning' ? 'text-yellow-600' :
+                                  'text-blue-600'
+                            )} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center space-x-2 mb-1 flex-wrap gap-1">
+                                <span className={cn(
+                                  "text-[10px] sm:text-xs font-semibold px-1.5 py-0.5 rounded",
+                                  alert.condition === 'critical' ? 'bg-red-200 text-red-800' :
+                                    alert.condition === 'warning' ? 'bg-yellow-200 text-yellow-800' :
+                                      'bg-blue-200 text-blue-800'
+                                )}>
+                                  {alert.condition === 'critical' ? 'CRIT' : alert.condition === 'warning' ? 'WARN' : 'INFO'}
+                                </span>
+                                {parameter && (
+                                  <span className="text-xs sm:text-sm font-medium text-foreground truncate">
+                                    {parameter.name}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs sm:text-sm text-foreground line-clamp-2 mb-1 leading-tight">
+                                {alert.message}
+                              </p>
+                              <p className="text-[10px] sm:text-xs text-muted-foreground">
+                                {new Date(alert.timestamp).toLocaleTimeString('es-ES', {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {alerts.length > 5 && (
+                      <Link to={clientCode ? `/${clientCode}/alerts` : '/alerts'} className="block">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-xs sm:text-sm h-8 sm:h-9 border-[#F97316] text-[#F97316] hover:bg-[#F97316] hover:text-white"
+                        >
+                          Ver todas ({alerts.length})
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Floating Alert Badge - Only when minimized or hidden */}
-      {alerts.length > 0 && !notificationsVisible && (
-        <div className="fixed bottom-4 right-4 z-50">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-12 w-12 rounded-full bg-[#F97316] hover:bg-[#F97316]/90 text-white border-[#F97316] shadow-lg"
-            onClick={() => {
-              setNotificationsVisible(true);
-              setNotificationsExpanded(true);
+      {
+        alerts.length > 0 && !notificationsVisible && (
+          <div className="fixed bottom-4 right-4 z-50">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-12 w-12 rounded-full bg-[#F97316] hover:bg-[#F97316]/90 text-white border-[#F97316] shadow-lg"
+              onClick={() => {
+                setNotificationsVisible(true);
+                setNotificationsExpanded(true);
+              }}
+            >
+              <div className="relative">
+                <Bell className="w-5 h-5" />
+                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {alerts.length > 9 ? '9+' : alerts.length}
+                </span>
+              </div>
+            </Button>
+          </div>
+        )
+      }
+
+      {/* Config Modal - Bottom Sheet Style */}
+      {isConfigModalOpen && clientCode && (
+        <>
+          {/* Frosted Backdrop */}
+          <div
+            className="fixed inset-0 z-[99] bg-black/40 backdrop-blur-sm animate-in fade-in duration-300"
+            onClick={async () => {
+              setIsConfigModalOpen(false);
+              setLoading(true);
+              await loadData();
             }}
-          >
-            <div className="relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                {alerts.length > 9 ? '9+' : alerts.length}
-              </span>
+          />
+
+          {/* Sheet */}
+          <div className="fixed inset-x-0 bottom-0 z-[100] flex flex-col bg-white dark:bg-gray-950 rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom duration-300" style={{ maxHeight: '92vh' }}>
+            {/* Handle + Close */}
+            <div className="flex items-center justify-between px-4 pt-3 pb-2 shrink-0">
+              <div className="flex-1" />
+              <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600 mx-auto" />
+              <div className="flex-1 flex justify-end">
+                <button
+                  onClick={async () => {
+                    setIsConfigModalOpen(false);
+                    setLoading(true);
+                    await loadData();
+                  }}
+                  className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-          </Button>
-        </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto px-3 pb-24 pt-1">
+              <Areas />
+            </div>
+          </div>
+        </>
       )}
-    </div>
+    </div >
   );
 }

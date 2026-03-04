@@ -85,6 +85,7 @@ export default function Areas() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [selectedParameterLocationAccordion, setSelectedParameterLocationAccordion] = useState<string>('');
   const [parameters, setParameters] = useState<Parameter[]>([]);
+  const [selectedSetpointLocationAccordion, setSelectedSetpointLocationAccordion] = useState<string>('');
   const [setpoints, setSetpoints] = useState<Record<string, Setpoint[]>>({});
   const [loading, setLoading] = useState(true);
   const isClientSelected = Boolean(effectiveClientCode);
@@ -141,11 +142,11 @@ export default function Areas() {
     notificationCondition: 'inside' | 'outside';
     isRange: boolean;
   }>>({});
-  const filteredSetpointParameters = parameters.filter((param) => {
-    const paramLocationId = getParameterLocationId(param);
-    if (!newParameter.locationId) return false;
-    return paramLocationId === newParameter.locationId;
-  });
+  // const filteredSetpointParameters = parameters.filter((param) => {
+  //   const paramLocationId = getParameterLocationId(param);
+  //   if (!newParameter.locationId) return false;
+  //   return paramLocationId === newParameter.locationId;
+  // });
 
   useEffect(() => {
     if (isAdminView) {
@@ -802,6 +803,100 @@ export default function Areas() {
                 </div>
               )}
 
+              {/* Client view: areas list with edit/delete - Floating Card Style */}
+              {!isAdminView && areas.length > 0 && (
+                <div className="mb-6 flex flex-col gap-1">
+                  {areas.map((area) => (
+                    <div
+                      key={area._id}
+                      className="bg-white dark:bg-gray-900 rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.07)] border border-gray-100 dark:border-gray-800 overflow-hidden flex"
+                    >
+                      {/* Green left accent bar */}
+                      <div className="w-1.5 bg-[#3eaa76] shrink-0 rounded-l-2xl" />
+
+                      <div className="flex-1 px-4 py-1">
+                        {editingArea === area._id ? (
+                          <div className="flex flex-col gap-4">
+                            {(() => {
+                              if (!editingAreaData[area._id]) initializeAreaEditing(area);
+                              return null;
+                            })()}
+                            <div className="grid grid-cols-1 gap-4">
+                              <div className="float-group">
+                                <input
+                                  type="text"
+                                  value={editingAreaData[area._id]?.name || ''}
+                                  onChange={(e) => updateAreaEditingField(area._id, 'name', e.target.value)}
+                                  disabled={updatingArea[area._id]}
+                                  placeholder=" "
+                                  className="float-input font-semibold"
+                                />
+                                <label className="float-label font-bold text-gray-500 uppercase tracking-wider text-[10px]">NOMBRE</label>
+                              </div>
+                              <div className="float-group">
+                                <input
+                                  type="text"
+                                  value={editingAreaData[area._id]?.description || ''}
+                                  onChange={(e) => updateAreaEditingField(area._id, 'description', e.target.value)}
+                                  disabled={updatingArea[area._id]}
+                                  placeholder=" "
+                                  className="float-input"
+                                />
+                                <label className="float-label font-bold text-gray-500 uppercase tracking-wider text-[10px]">DESCRIPCIÓN</label>
+                              </div>
+                            </div>
+                            <div className="flex gap-2 items-center">
+                              <IonButton
+                                fill="solid"
+                                size="small"
+                                onClick={() => handleSaveArea(area._id)}
+                                disabled={updatingArea[area._id] || !editingAreaData[area._id]}
+                                className="font-bold text-white rounded shadow-sm"
+                                style={{ '--background': '#3eaa76', '--background-hover': '#338f61', '--padding-top': '0.75rem', '--padding-bottom': '0.75rem', '--padding-start': '1.5rem', '--padding-end': '1.5rem' }}
+                              >
+                                {updatingArea[area._id] ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Guardando...</>) : 'GUARDAR'}
+                              </IonButton>
+                              <IonButton
+                                fill="clear"
+                                onClick={() => {
+                                  setEditingAreaData(prev => { const s = { ...prev }; delete s[area._id]; return s; });
+                                  setEditingArea(null);
+                                }}
+                              >
+                                <X className="w-5 h-5 text-gray-500" />
+                              </IonButton>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 overflow-hidden">
+                              <h4 className="font-semibold text-[16px] text-[#1c2b36] dark:text-gray-100 truncate">{area.name}</h4>
+                              {area.description && <p className="text-xs text-gray-400 truncate mt-0.5">{area.description}</p>}
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => setEditingArea(area._id)}
+                                className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-[#3eaa76] hover:bg-emerald-50 transition-colors"
+                              >
+                                <Edit2 className="w-4 h-4 stroke-[1.5]" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDeleteModalState({ isOpen: true, type: 'area', targetId: area._id })}
+                                className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4 stroke-[1.5]" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* New Area Form */}
               <div className="mb-8 p-6 bg-white rounded-2xl border border-dashed border-gray-300">
                 <h3 className="font-semibold text-gray-700 mb-6 flex items-center space-x-2 text-lg">
@@ -885,89 +980,72 @@ export default function Areas() {
 
           <Card className="border-0 shadow-none bg-transparent">
             <CardContent className="p-0">
-              {/* Areas List with Locations Accordion */}
+              {/* Areas List with Locations - Nested Card Style (Option A) */}
               {areas.length > 0 && (
-                <div className="mb-8">
-                  <div className="flex flex-col border border-gray-100 dark:border-gray-800 rounded-lg overflow-hidden bg-white dark:bg-gray-950 shadow-sm transition-all focus-within:ring-2 focus-within:ring-[#3eaa76]/50">
-                    {areas.map((area, index) => (
-                      <div key={area._id} className={cn("flex flex-col group", index !== areas.length - 1 ? "border-b border-gray-100 dark:border-gray-800" : "")}>
+                <div className="mb-8 flex flex-col gap-1">
+                  {areas.map((area) => {
+                    const isOpen = selectedLocationAreaAccordion === area._id;
+                    const areaLocations = locations.filter(loc => getLocationAreaId(loc) === area._id);
+
+                    return (
+                      <div
+                        key={area._id}
+                        className="bg-white dark:bg-gray-900 rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.07)] border border-gray-100 dark:border-gray-800 overflow-hidden"
+                      >
+                        {/* Area header card */}
                         <button
                           type="button"
-                          onClick={() => setSelectedLocationAreaAccordion(selectedLocationAreaAccordion === area._id ? '' : area._id)}
-                          className="w-full flex items-center justify-between px-5 py-4 min-h-[50px] bg-white dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors outline-none"
+                          onClick={() => setSelectedLocationAreaAccordion(isOpen ? '' : area._id)}
+                          className="w-full flex items-center gap-3 px-5 py-4 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors outline-none"
                         >
-                          <span className="text-[15px] font-bold text-gray-900 dark:text-white transition-colors uppercase tracking-wider">{area.name}</span>
-                          <ChevronDown className={cn("w-5 h-5 text-gray-400 transition-transform duration-300", selectedLocationAreaAccordion === area._id ? "rotate-180" : "")} />
+                          {/* Green left bar */}
+                          <div className="w-1 h-10 bg-[#3eaa76] rounded-full shrink-0" />
+                          <span className="flex-1 text-left text-[14px] font-bold text-[#1c2b36] dark:text-white uppercase tracking-wide truncate">
+                            {area.name}
+                          </span>
+                          {areaLocations.length > 0 && (
+                            <span className="text-[11px] font-semibold text-[#3eaa76] bg-green-50 border border-green-100 px-2 py-0.5 rounded-full shrink-0">
+                              {areaLocations.length}
+                            </span>
+                          )}
+                          <ChevronDown className={cn("w-4 h-4 text-gray-400 transition-transform duration-300 shrink-0", isOpen ? "rotate-180" : "")} />
                         </button>
 
-                        <div className={cn(
-                          "transition-all duration-300 ease-in-out overflow-hidden",
-                          selectedLocationAreaAccordion === area._id ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
-                        )}>
-                          <div className="flex flex-col border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950">
-                            {(() => {
-                              const areaLocations = locations.filter(loc => getLocationAreaId(loc) === area._id);
+                        {/* Expandable location list */}
+                        <div className={cn("transition-all duration-300 ease-in-out overflow-hidden", isOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0")}>
+                          <div className="px-3 pb-3 pt-1 bg-[#f6fdf9] dark:bg-gray-900/50 flex flex-col gap-1">
+                            {areaLocations.length > 0 ? areaLocations.map((location) => (
+                              <div
+                                key={location._id}
+                                className="bg-white dark:bg-gray-800 rounded-xl shadow-[0_1px_6px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-700 overflow-hidden flex ml-3"
+                              >
+                                {/* Softer green accent bar for child */}
+                                <div className="w-1 bg-[#3eaa76]/50 shrink-0 rounded-l-xl" />
 
-                              return areaLocations.length > 0 ? areaLocations.map((location, locIndex) => (
-                                <div key={location._id} className={cn("flex items-center gap-4 px-6 py-4 bg-white dark:bg-gray-900 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50", locIndex !== areaLocations.length - 1 ? "border-b border-gray-100 dark:border-gray-800" : "")}>
+                                <div className="flex-1 px-3">
                                   {editingLocation === location._id ? (
-                                    <div className="w-full flex flex-col gap-4">
+                                    <div className="flex flex-col gap-4 py-1">
                                       {(() => {
-                                        if (!editingLocationData[location._id]) {
-                                          initializeLocationEditing(location);
-                                        }
+                                        if (!editingLocationData[location._id]) initializeLocationEditing(location);
                                         return null;
                                       })()}
                                       <div className="grid grid-cols-1 gap-4">
                                         <div className="float-group">
-                                          <input
-                                            type="text"
-                                            value={editingLocationData[location._id]?.name || ''}
-                                            onChange={(e) => updateLocationEditingField(location._id, 'name', e.target.value)}
-                                            disabled={updatingLocation[location._id]}
-                                            placeholder=" "
-                                            className="float-input font-semibold"
-                                          />
+                                          <input type="text" value={editingLocationData[location._id]?.name || ''} onChange={(e) => updateLocationEditingField(location._id, 'name', e.target.value)} disabled={updatingLocation[location._id]} placeholder=" " className="float-input font-semibold" />
                                           <label className="float-label font-bold text-gray-500 uppercase tracking-wider text-[10px]">NOMBRE</label>
                                         </div>
                                         <div className="float-group">
-                                          <input
-                                            type="text"
-                                            value={editingLocationData[location._id]?.description || ''}
-                                            onChange={(e) => updateLocationEditingField(location._id, 'description', e.target.value)}
-                                            disabled={updatingLocation[location._id]}
-                                            placeholder=" "
-                                            className="float-input"
-                                          />
+                                          <input type="text" value={editingLocationData[location._id]?.description || ''} onChange={(e) => updateLocationEditingField(location._id, 'description', e.target.value)} disabled={updatingLocation[location._id]} placeholder=" " className="float-input" />
                                           <label className="float-label font-bold text-gray-500 uppercase tracking-wider text-[10px]">DESCRIPCIÓN</label>
                                         </div>
-                                        <IonSelect
-                                          value={editingLocationData[location._id]?.areaId || ''}
-                                          onIonChange={(e) => updateLocationEditingField(location._id, 'areaId', e.detail.value)}
-                                          disabled={updatingLocation[location._id]}
-                                          className="flex min-h-[48px] w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-0 text-sm focus:outline-none transition-all"
-                                        >
-                                          {areas.map((a) => (
-                                            <IonSelectOption key={a._id} value={a._id}>{a.name}</IonSelectOption>
-                                          ))}
+                                        <IonSelect value={editingLocationData[location._id]?.areaId || ''} onIonChange={(e) => updateLocationEditingField(location._id, 'areaId', e.detail.value)} disabled={updatingLocation[location._id]} className="flex min-h-[48px] w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-0 text-sm focus:outline-none transition-all">
+                                          {areas.map((a) => (<IonSelectOption key={a._id} value={a._id}>{a.name}</IonSelectOption>))}
                                         </IonSelect>
                                         <div className="float-group">
-                                          <input
-                                            type="text"
-                                            value={editingLocationData[location._id]?.message || ''}
-                                            onChange={(e) => updateLocationEditingField(location._id, 'message', e.target.value)}
-                                            disabled={updatingLocation[location._id]}
-                                            placeholder=" "
-                                            className="float-input"
-                                          />
+                                          <input type="text" value={editingLocationData[location._id]?.message || ''} onChange={(e) => updateLocationEditingField(location._id, 'message', e.target.value)} disabled={updatingLocation[location._id]} placeholder=" " className="float-input" />
                                           <label className="float-label font-bold text-gray-500 uppercase tracking-wider text-[10px]">MENSAJE PARA EL DASHBOARD</label>
                                         </div>
-                                        <IonSelect
-                                          value={editingLocationData[location._id]?.status || 'info'}
-                                          onIonChange={(e) => updateLocationEditingField(location._id, 'status', e.detail.value)}
-                                          disabled={updatingLocation[location._id]}
-                                          className="flex min-h-[48px] w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-0 text-sm focus:outline-none transition-all"
-                                        >
+                                        <IonSelect value={editingLocationData[location._id]?.status || 'info'} onIonChange={(e) => updateLocationEditingField(location._id, 'status', e.detail.value)} disabled={updatingLocation[location._id]} className="flex min-h-[48px] w-full rounded-xl border border-gray-200 bg-gray-50/50 px-4 py-0 text-sm focus:outline-none transition-all">
                                           <IonSelectOption value="info">Info</IonSelectOption>
                                           <IonSelectOption value="warning">Warning</IonSelectOption>
                                           <IonSelectOption value="danger">Danger</IonSelectOption>
@@ -975,79 +1053,42 @@ export default function Areas() {
                                         </IonSelect>
                                       </div>
                                       <div className="flex gap-2 items-center">
-                                        <IonButton
-                                          fill="solid"
-                                          size="small"
-                                          onClick={() => handleSaveLocation(location._id)}
-                                          disabled={updatingLocation[location._id] || !editingLocationData[location._id]}
-                                          className="font-bold text-white rounded shadow-sm"
-                                          style={{ '--background': '#3eaa76', '--background-hover': '#338f61', '--padding-top': '0.75rem', '--padding-bottom': '0.75rem', '--padding-start': '1.5rem', '--padding-end': '1.5rem' }}
-                                        >
-                                          {updatingLocation[location._id] ? (
-                                            <>
-                                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                              Guardando...
-                                            </>
-                                          ) : (
-                                            'GUARDAR'
-                                          )}
+                                        <IonButton fill="solid" size="small" onClick={() => handleSaveLocation(location._id)} disabled={updatingLocation[location._id] || !editingLocationData[location._id]} className="font-bold text-white rounded shadow-sm" style={{ '--background': '#3eaa76', '--background-hover': '#338f61', '--padding-top': '0.75rem', '--padding-bottom': '0.75rem', '--padding-start': '1.5rem', '--padding-end': '1.5rem' }}>
+                                          {updatingLocation[location._id] ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Guardando...</>) : 'GUARDAR'}
                                         </IonButton>
-                                        <IonButton
-                                          fill="clear"
-                                          onClick={() => {
-                                            setEditingLocationData(prev => {
-                                              const newState = { ...prev };
-                                              delete newState[location._id];
-                                              return newState;
-                                            });
-                                            setEditingLocation(null);
-                                          }}
-                                        >
+                                        <IonButton fill="clear" onClick={() => { setEditingLocationData(prev => { const s = { ...prev }; delete s[location._id]; return s; }); setEditingLocation(null); }}>
                                           <X className="w-5 h-5 text-gray-500" />
                                         </IonButton>
                                       </div>
                                     </div>
                                   ) : (
-                                    <>
+                                    <div className="flex items-center gap-2">
                                       <div className="flex-1 overflow-hidden">
-                                        <h4 className="font-medium text-[17px] text-[#1c2b36] dark:text-gray-100 truncate">
-                                          {location.name}
-                                        </h4>
-                                        {location.description && <p className="text-sm text-gray-500 mt-1">{location.description}</p>}
+                                        <h4 className="font-semibold text-[14px] text-[#1c2b36] dark:text-gray-100 truncate">{location.name}</h4>
+                                        {location.description && <p className="text-xs text-gray-400 truncate mt-0.5">{location.description}</p>}
                                       </div>
-                                      <div className="flex items-center space-x-1 shrink-0 bg-transparent">
-                                        <button
-                                          type="button"
-                                          onClick={() => setEditingLocation(location._id)}
-                                          className="p-2 text-gray-500 hover:text-[#3eaa76] hover:bg-emerald-50 rounded-full transition-colors"
-                                        >
-                                          <Edit2 className="w-[18px] h-[18px] stroke-[1.5]" />
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        <button type="button" onClick={() => setEditingLocation(location._id)} className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-[#3eaa76] hover:bg-emerald-50 transition-colors">
+                                          <Edit2 className="w-3.5 h-3.5 stroke-[1.5]" />
                                         </button>
-                                        <button
-                                          type="button"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setDeleteModalState({ isOpen: true, type: 'location', targetId: location._id });
-                                          }}
-                                          className="p-2 text-[#e53e3e] hover:text-red-700 hover:bg-red-50 rounded-full transition-colors"
-                                        >
-                                          <Trash2 className="w-[18px] h-[18px] stroke-[1.5]" />
+                                        <button type="button" onClick={(e) => { e.stopPropagation(); setDeleteModalState({ isOpen: true, type: 'location', targetId: location._id }); }} className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                                          <Trash2 className="w-3.5 h-3.5 stroke-[1.5]" />
                                         </button>
                                       </div>
-                                    </>
+                                    </div>
                                   )}
                                 </div>
-                              )) : (
-                                <div className="text-center py-6 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl m-4">
-                                  <p className="text-sm text-gray-500 italic">No hay ubicaciones asociadas a esta área.</p>
-                                </div>
-                              );
-                            })()}
+                              </div>
+                            )) : (
+                              <div className="ml-3 text-center py-4 border border-dashed border-green-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800">
+                                <p className="text-xs text-gray-400 italic">No hay ubicaciones en esta área</p>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
               )}
 
@@ -1153,209 +1194,131 @@ export default function Areas() {
 
           <Card className="border-0 shadow-none bg-transparent">
             <CardContent className="p-0">
-              {/* Locations List with Parameters Accordion */}
+              {/* Locations with Parameters - Nested Card Style (Option A) */}
               {locations.length > 0 && (
-                <div className="mb-8">
-                  <div className="flex flex-col border border-gray-100 dark:border-gray-800 rounded-lg overflow-hidden bg-white dark:bg-gray-950 shadow-sm transition-all focus-within:ring-2 focus-within:ring-[#3eaa76]/50">
-                    {locations.map((location, index) => {
-                      const area = areas.find(a => a._id === getLocationAreaId(location));
-                      return (
-                        <div key={location._id} className={cn("flex flex-col group", index !== locations.length - 1 ? "border-b border-gray-100 dark:border-gray-800" : "")}>
-                          <button
-                            type="button"
-                            onClick={() => setSelectedParameterLocationAccordion(selectedParameterLocationAccordion === location._id ? '' : location._id)}
-                            className="w-full flex flex-col items-start px-5 py-3 min-h-[50px] bg-white dark:bg-gray-950 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors outline-none"
-                          >
-                            <div className="w-full flex items-center justify-between">
-                              <span className="text-[15px] font-bold text-gray-900 dark:text-white transition-colors uppercase tracking-wider">{location.name}</span>
-                              <ChevronDown className={cn("w-5 h-5 text-gray-400 transition-transform duration-300", selectedParameterLocationAccordion === location._id ? "rotate-180" : "")} />
-                            </div>
-                            {area && (
-                              <span className="text-xs text-gray-400 mt-1">{area.name}</span>
-                            )}
-                          </button>
+                <div className="mb-8 flex flex-col gap-1">
+                  {locations.map((location) => {
+                    const area = areas.find(a => a._id === getLocationAreaId(location));
+                    const isOpen = selectedParameterLocationAccordion === location._id;
+                    const locationParameters = parameters.filter(p => getParameterLocationId(p) === location._id);
 
-                          <div className={cn(
-                            "transition-all duration-300 ease-in-out overflow-hidden",
-                            selectedParameterLocationAccordion === location._id ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
-                          )}>
-                            <div className="flex flex-col border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-950">
-                              {(() => {
-                                const locationParameters = parameters.filter((parameter) => {
-                                  return getParameterLocationId(parameter) === location._id;
-                                });
+                    return (
+                      <div
+                        key={location._id}
+                        className="bg-white dark:bg-gray-900 rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.07)] border border-gray-100 dark:border-gray-800 overflow-hidden"
+                      >
+                        {/* Location header */}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedParameterLocationAccordion(isOpen ? '' : location._id)}
+                          className="w-full flex items-center gap-3 px-5 py-4 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors outline-none"
+                        >
+                          <div className="w-1 h-10 bg-[#3eaa76] rounded-full shrink-0" />
+                          <div className="flex-1 text-left overflow-hidden">
+                            <span className="block text-[14px] font-bold text-[#1c2b36] dark:text-white uppercase tracking-wide truncate">{location.name}</span>
+                            {area && <span className="block text-[11px] text-gray-400 truncate mt-0.5">{area.name}</span>}
+                          </div>
+                          {locationParameters.length > 0 && (
+                            <span className="text-[11px] font-semibold text-[#3eaa76] bg-green-50 border border-green-100 px-2 py-0.5 rounded-full shrink-0">
+                              {locationParameters.length}
+                            </span>
+                          )}
+                          <ChevronDown className={cn("w-4 h-4 text-gray-400 transition-transform duration-300 shrink-0", isOpen ? "rotate-180" : "")} />
+                        </button>
 
-                                return locationParameters.length > 0 ? locationParameters.map((parameter) => {
-                                  return (
-                                    <div key={parameter._id} className="p-4 border-b border-gray-100 dark:border-gray-800 last:border-0 hover:bg-muted/50 transition-colors">
-                                      {editingParameter === parameter._id ? (
-                                        <div className="space-y-4">
-                                          {(() => {
-                                            if (!editingParameterData[parameter._id]) {
-                                              initializeParameterEditing(parameter);
-                                            }
-                                            return null;
-                                          })()}
-                                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="float-group">
-                                              <input
-                                                type="text"
-                                                value={editingParameterData[parameter._id]?.name || ''}
-                                                onChange={(e) => updateParameterEditingField(parameter._id, 'name', e.target.value)}
-                                                disabled={updatingParameter[parameter._id]}
-                                                placeholder=" "
-                                                className="float-input"
-                                              />
-                                              <label className="float-label">Nombre</label>
-                                            </div>
-                                            <div>
-                                              <Label>Tipo</Label>
-                                              <IonSelect
-                                                value={editingParameterData[parameter._id]?.type || 'sensor'}
-                                                onIonChange={(e) => updateParameterEditingField(parameter._id, 'type', e.detail.value as 'sensor' | 'status')}
-                                                disabled={updatingParameter[parameter._id]}
-                                                className="flex min-h-[40px] w-full rounded-md border border-input bg-background px-3 py-0 text-sm"
-                                              >
-                                                <IonSelectOption value="sensor">Sensor (Valor numérico)</IonSelectOption>
-                                                <IonSelectOption value="status">Estado (ON/OFF)</IonSelectOption>
-                                              </IonSelect>
-                                            </div>
-                                            <div className="float-group">
-                                              <input
-                                                type="text"
-                                                value={editingParameterData[parameter._id]?.unit || ''}
-                                                onChange={(e) => updateParameterEditingField(parameter._id, 'unit', e.target.value)}
-                                                disabled={parameter.type === 'status' || updatingParameter[parameter._id]}
-                                                placeholder=" "
-                                                className="float-input"
-                                              />
-                                              <label className="float-label">Unidad</label>
-                                            </div>
-                                            <div className="float-group">
-                                              <input
-                                                type="number"
-                                                min={0}
-                                                max={6}
-                                                value={editingParameterData[parameter._id]?.decimals ?? 2}
-                                                onChange={(e) => {
-                                                  const value = Math.max(0, Math.min(6, Number(e.target.value)));
-                                                  updateParameterEditingField(parameter._id, 'decimals', Number.isNaN(value) ? 2 : value);
-                                                }}
-                                                disabled={updatingParameter[parameter._id]}
-                                                placeholder=" "
-                                                className="float-input"
-                                              />
-                                              <label className="float-label">Decimales</label>
-                                            </div>
-                                            <div className="float-group md:col-span-2">
-                                              <input
-                                                type="text"
-                                                value={editingParameterData[parameter._id]?.topic || ''}
-                                                onChange={(e) => updateParameterEditingField(parameter._id, 'topic', e.target.value)}
-                                                disabled={updatingParameter[parameter._id]}
-                                                placeholder=" "
-                                                className="float-input"
-                                              />
-                                              <label className="float-label">Tópico MQTT</label>
-                                            </div>
-                                            <div className="float-group md:col-span-2">
-                                              <textarea
-                                                value={editingParameterData[parameter._id]?.description || ''}
-                                                onChange={(e) => updateParameterEditingField(parameter._id, 'description', e.target.value)}
-                                                disabled={updatingParameter[parameter._id]}
-                                                placeholder=" "
-                                                className="float-textarea resize-none"
-                                              />
-                                              <label className="float-label">Descripción</label>
-                                            </div>
-                                          </div>
-                                          <div className="flex gap-2 items-center">
-                                            <IonButton
-                                              fill="solid"
-                                              size="small"
-                                              onClick={() => handleSaveParameter(parameter._id)}
-                                              disabled={updatingParameter[parameter._id] || !editingParameterData[parameter._id]}
-                                              className="font-bold text-white rounded shadow-sm"
-                                              style={{ '--background': '#3eaa76', '--background-hover': '#338f61', '--padding-top': '0.75rem', '--padding-bottom': '0.75rem', '--padding-start': '1.5rem', '--padding-end': '1.5rem' }}
-                                            >
-                                              {updatingParameter[parameter._id] ? (
-                                                <>
-                                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                                  Guardando...
-                                                </>
-                                              ) : (
-                                                'GUARDAR'
-                                              )}
-                                            </IonButton>
-                                            <IonButton
-                                              fill="clear"
-                                              onClick={() => {
-                                                setEditingParameterData(prev => {
-                                                  const newState = { ...prev };
-                                                  delete newState[parameter._id];
-                                                  return newState;
-                                                });
-                                                setEditingParameter(null);
-                                              }}
-                                            >
-                                              <X className="w-5 h-5 text-gray-500" />
-                                            </IonButton>
-                                          </div>
+                        {/* Expandable parameter list */}
+                        <div className={cn("transition-all duration-300 ease-in-out overflow-hidden", isOpen ? "max-h-[3000px] opacity-100" : "max-h-0 opacity-0")}>
+                          <div className="px-3 pb-3 pt-1 bg-[#f6fdf9] dark:bg-gray-900/50 flex flex-col gap-2">
+                            {locationParameters.length > 0 ? locationParameters.map((parameter) => (
+                              <div
+                                key={parameter._id}
+                                className="bg-white dark:bg-gray-800 rounded-xl shadow-[0_1px_6px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-700 overflow-hidden flex ml-3"
+                              >
+                                <div className="w-1 bg-[#3eaa76]/50 shrink-0 rounded-l-xl" />
+                                <div className="flex-1 px-3">
+                                  {editingParameter === parameter._id ? (
+                                    <div className="space-y-4 py-1">
+                                      {(() => {
+                                        if (!editingParameterData[parameter._id]) initializeParameterEditing(parameter);
+                                        return null;
+                                      })()}
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="float-group">
+                                          <input type="text" value={editingParameterData[parameter._id]?.name || ''} onChange={(e) => updateParameterEditingField(parameter._id, 'name', e.target.value)} disabled={updatingParameter[parameter._id]} placeholder=" " className="float-input" />
+                                          <label className="float-label">Nombre</label>
                                         </div>
-                                      ) : (
-                                        <div className="flex items-start justify-between">
-                                          <div className="flex-1 min-w-0 pr-4">
-                                            <div className="flex items-center space-x-2 mb-2">
-                                              <h4 className="font-semibold text-[15px] sm:text-[16px] text-gray-900 dark:text-gray-100 tracking-tight leading-tight">{parameter.name}</h4>
-                                              {parameter.type === 'status' && (
-                                                <span className="text-[10px] sm:text-xs bg-purple-100 text-purple-800 px-2 py-0.5 sm:py-1 rounded font-medium whitespace-nowrap shrink-0">
-                                                  Estado
-                                                </span>
-                                              )}
-                                              <span className="text-[11px] sm:text-xs text-gray-500 whitespace-nowrap shrink-0 block mt-[1px]">({parameter.unit})</span>
-                                            </div>
-                                            <p className="text-[12px] sm:text-[13px] font-mono text-gray-500 mb-1 break-all leading-tight">{parameter.topic}</p>
-                                            {parameter.description && (
-                                              <p className="text-[12px] sm:text-[13px] text-gray-400 leading-tight">{parameter.description}</p>
-                                            )}
-                                          </div>
-                                          <div className="flex items-center space-x-1 shrink-0 bg-transparent">
-                                            <button
-                                              type="button"
-                                              onClick={() => setEditingParameter(parameter._id)}
-                                              className="p-2 text-gray-500 hover:text-[#3eaa76] hover:bg-emerald-50 rounded-full transition-colors"
-                                            >
-                                              <Edit2 className="w-[18px] h-[18px] stroke-[1.5]" />
-                                            </button>
-                                            <button
-                                              type="button"
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                setDeleteModalState({ isOpen: true, type: 'parameter', targetId: parameter._id });
-                                              }}
-                                              className="p-2 text-[#e53e3e] hover:text-red-700 hover:bg-red-50 rounded-full transition-colors"
-                                            >
-                                              <Trash2 className="w-[18px] h-[18px] stroke-[1.5]" />
-                                            </button>
-                                          </div>
+                                        <div>
+                                          <Label>Tipo</Label>
+                                          <IonSelect value={editingParameterData[parameter._id]?.type || 'sensor'} onIonChange={(e) => updateParameterEditingField(parameter._id, 'type', e.detail.value as 'sensor' | 'status')} disabled={updatingParameter[parameter._id]} className="flex min-h-[40px] w-full rounded-md border border-input bg-background px-3 py-0 text-sm">
+                                            <IonSelectOption value="sensor">Sensor (Valor numérico)</IonSelectOption>
+                                            <IonSelectOption value="status">Estado (ON/OFF)</IonSelectOption>
+                                          </IonSelect>
                                         </div>
-                                      )}
+                                        <div className="float-group">
+                                          <input type="text" value={editingParameterData[parameter._id]?.unit || ''} onChange={(e) => updateParameterEditingField(parameter._id, 'unit', e.target.value)} disabled={parameter.type === 'status' || updatingParameter[parameter._id]} placeholder=" " className="float-input" />
+                                          <label className="float-label">Unidad</label>
+                                        </div>
+                                        <div className="float-group">
+                                          <input type="number" min={0} max={6} value={editingParameterData[parameter._id]?.decimals ?? 2} onChange={(e) => { const value = Math.max(0, Math.min(6, Number(e.target.value))); updateParameterEditingField(parameter._id, 'decimals', Number.isNaN(value) ? 2 : value); }} disabled={updatingParameter[parameter._id]} placeholder=" " className="float-input" />
+                                          <label className="float-label">Decimales</label>
+                                        </div>
+                                        <div className="float-group md:col-span-2">
+                                          <input type="text" value={editingParameterData[parameter._id]?.topic || ''} onChange={(e) => updateParameterEditingField(parameter._id, 'topic', e.target.value)} disabled={updatingParameter[parameter._id]} placeholder=" " className="float-input" />
+                                          <label className="float-label">Tópico MQTT</label>
+                                        </div>
+                                        <div className="float-group md:col-span-2">
+                                          <textarea value={editingParameterData[parameter._id]?.description || ''} onChange={(e) => updateParameterEditingField(parameter._id, 'description', e.target.value)} disabled={updatingParameter[parameter._id]} placeholder=" " className="float-textarea resize-none" />
+                                          <label className="float-label">Descripción</label>
+                                        </div>
+                                      </div>
+                                      <div className="flex gap-2 items-center">
+                                        <IonButton fill="solid" size="small" onClick={() => handleSaveParameter(parameter._id)} disabled={updatingParameter[parameter._id] || !editingParameterData[parameter._id]} className="font-bold text-white rounded shadow-sm" style={{ '--background': '#3eaa76', '--background-hover': '#338f61', '--padding-top': '0.75rem', '--padding-bottom': '0.75rem', '--padding-start': '1.5rem', '--padding-end': '1.5rem' }}>
+                                          {updatingParameter[parameter._id] ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Guardando...</>) : 'GUARDAR'}
+                                        </IonButton>
+                                        <IonButton fill="clear" onClick={() => { setEditingParameterData(prev => { const s = { ...prev }; delete s[parameter._id]; return s; }); setEditingParameter(null); }}>
+                                          <X className="w-5 h-5 text-gray-500" />
+                                        </IonButton>
+                                      </div>
                                     </div>
-                                  );
-                                }) : (
-                                  <div className="text-center py-6 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl m-4">
-                                    <p className="text-sm text-gray-500 italic">No hay parámetros asociados a esta ubicación.</p>
-                                  </div>
-                                );
-                              })()}
-                            </div>
+                                  ) : (
+                                    <div className="flex items-start gap-2">
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          <h4 className="font-semibold text-[14px] text-gray-900 dark:text-gray-100 leading-tight">{parameter.name}</h4>
+                                          {parameter.type === 'status' && (
+                                            <span className="text-[10px] bg-purple-100 text-purple-800 px-1.5 py-0.5 rounded font-medium">Estado</span>
+                                          )}
+                                          <span className="text-[11px] text-gray-400">({parameter.unit})</span>
+                                        </div>
+                                        <p className="text-[11px] font-mono text-gray-400 mt-0.5 break-all leading-tight">{parameter.topic}</p>
+                                        {parameter.description && <p className="text-[11px] text-gray-400 mt-0.5 leading-tight">{parameter.description}</p>}
+                                      </div>
+                                      <div className="flex items-center gap-1 shrink-0 mt-0.5">
+                                        <button type="button" onClick={() => setEditingParameter(parameter._id)} className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-[#3eaa76] hover:bg-emerald-50 transition-colors">
+                                          <Edit2 className="w-3.5 h-3.5 stroke-[1.5]" />
+                                        </button>
+                                        <button type="button" onClick={(e) => { e.stopPropagation(); setDeleteModalState({ isOpen: true, type: 'parameter', targetId: parameter._id }); }} className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+                                          <Trash2 className="w-3.5 h-3.5 stroke-[1.5]" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )) : (
+                              <div className="ml-3 text-center py-4 border border-dashed border-green-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800">
+                                <p className="text-xs text-gray-400 italic">No hay parámetros en esta ubicación</p>
+                              </div>
+                            )}
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
+
+
 
               {/* New Parameter Form */}
               <div className="mb-8 p-6 bg-white rounded-2xl border border-dashed border-gray-300">
@@ -1485,12 +1448,12 @@ export default function Areas() {
                 </IonButton>
               </div>
 
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </CardContent >
+          </Card >
+        </TabsContent >
 
         {/* Setpoints Tab */}
-        <TabsContent value="setpoints" className="space-y-4">
+        < TabsContent value="setpoints" className="space-y-4" >
           <div className="bg-[#E0F7FA] p-6 rounded-2xl mb-8">
             <h3 className="text-xl font-bold text-gray-900 mb-1">Setpoints</h3>
             <p className="text-sm text-gray-500">Configure los setpoints para cada parámetro</p>
@@ -1498,516 +1461,540 @@ export default function Areas() {
 
           <Card className="border-0 shadow-none bg-transparent">
             <CardContent className="p-0">
-              <div className="space-y-6">
-                {parameters
-                  .filter((parameter) => {
-                    const paramLocationId = getParameterLocationId(parameter);
-                    if (!newParameter.locationId) return false;
-                    return paramLocationId === newParameter.locationId;
-                  })
-                  .map((parameter) => {
-                    const paramLocationId = getParameterLocationId(parameter);
-                    const location = locations.find(l => l._id === paramLocationId);
-                    const area = location ? areas.find(a => a._id === location.areaId) : null;
-                    const paramSetpoints = setpoints[parameter._id] || [];
-                    const newSetpointData = newSetpoint[parameter._id] || {
-                      minValue: 0,
-                      maxValue: null,
-                      color: '#FF0000',
-                      label: '',
-                      condition: 'normal',
-                      notificationsEnabled: false,
-                      notificationCondition: 'outside',
-                      isRange: false
-                    };
+              {/* Location accordion → Parameters with Setpoints */}
+              {locations.length > 0 && (
+                <div className="mb-8 flex flex-col gap-1">
+                  {locations.map((location) => {
+                    const area = areas.find(a => a._id === getLocationAreaId(location));
+                    const isOpen = selectedSetpointLocationAccordion === location._id;
+                    const locationParameters = parameters.filter(p => getParameterLocationId(p) === location._id);
 
                     return (
-                      <div key={parameter._id} className="border rounded-lg p-3 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h4 className="font-semibold text-sm">{parameter.name}</h4>
-                            {area && location && (
-                              <p className="text-xs text-muted-foreground">{area.name} → {location.name}</p>
-                            )}
+                      <div
+                        key={location._id}
+                        className="bg-white dark:bg-gray-900 rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.07)] border border-gray-100 dark:border-gray-800 overflow-hidden"
+                      >
+                        {/* Location header */}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedSetpointLocationAccordion(isOpen ? '' : location._id)}
+                          className="w-full flex items-center gap-3 px-5 py-4 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors outline-none"
+                        >
+                          <div className="w-1 h-10 bg-[#3eaa76] rounded-full shrink-0" />
+                          <div className="flex-1 text-left overflow-hidden">
+                            <span className="block text-[14px] font-bold text-[#1c2b36] dark:text-white uppercase tracking-wide truncate">{location.name}</span>
+                            {area && <span className="block text-[11px] text-gray-400 truncate mt-0.5">{area.name}</span>}
                           </div>
-                        </div>
-
-                        {/* New Setpoint Form - Compact */}
-                        <div className="p-4 bg-white rounded-2xl border border-dashed border-gray-300 space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                            {/* Range Values */}
-                            <div className="md:col-span-2">
-                              <div className="flex items-center space-x-2 h-full">
-                                <div className="float-group w-full h-full flex items-center">
-                                  <input
-                                    type="number"
-                                    step="any"
-                                    placeholder=" "
-                                    value={newSetpointData.minValue !== null && newSetpointData.minValue !== undefined ? newSetpointData.minValue : ''}
-                                    onChange={(e) => {
-                                      const val = e.target.value;
-                                      const numVal = val === '' ? null : parseFloat(val);
-                                      setNewSetpoint({
-                                        ...newSetpoint,
-                                        [parameter._id]: {
-                                          ...newSetpointData,
-                                          minValue: numVal !== null && !isNaN(numVal) ? numVal : 0
-                                        }
-                                      });
-                                    }}
-                                    className="float-input"
-                                  />
-                                  <label className="float-label">Min *</label>
-                                </div>
-                                <span className="text-muted-foreground">-</span>
-                                <div className="float-group w-full h-full flex items-center">
-                                  <input
-                                    type="number"
-                                    step="any"
-                                    placeholder=" "
-                                    value={newSetpointData.maxValue !== null && newSetpointData.maxValue !== undefined ? newSetpointData.maxValue : ''}
-                                    onChange={(e) => {
-                                      const val = e.target.value;
-                                      const numVal = val === '' ? null : parseFloat(val);
-                                      setNewSetpoint({
-                                        ...newSetpoint,
-                                        [parameter._id]: {
-                                          ...newSetpointData,
-                                          maxValue: numVal !== null && !isNaN(numVal) ? numVal : null,
-                                          isRange: val !== '' && !isNaN(parseFloat(val))
-                                        }
-                                      });
-                                    }}
-                                    className="float-input"
-                                  />
-                                  <label className="float-label">Max</label>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Label */}
-                            <div className="h-full flex items-center">
-                              <div className="float-group w-full">
-                                <input
-                                  type="text"
-                                  placeholder=" "
-                                  value={newSetpointData.label}
-                                  onChange={(e) => setNewSetpoint({
-                                    ...newSetpoint,
-                                    [parameter._id]: { ...newSetpointData, label: e.target.value }
-                                  })}
-                                  className="float-input"
-                                />
-                                <label className="float-label">Etiqueta</label>
-                              </div>
-                            </div>
-
-                            {/* Color Palette */}
-                            <div>
-                              <Label className="text-xs font-semibold mb-1 block">Color</Label>
-                              <div className="flex items-center flex-wrap gap-1.5">
-                                {['#3eaa76', '#9EE538', '#51E8D4', '#0091A0', '#EF4444', '#F97316', '#F59E0B', '#EAB308', '#84CC16', '#22C55E'].map((color) => (
-                                  <button
-                                    key={color}
-                                    type="button"
-                                    onClick={() => setNewSetpoint({
-                                      ...newSetpoint,
-                                      [parameter._id]: { ...newSetpointData, color }
-                                    })}
-                                    className={cn(
-                                      "w-5 h-8 rounded-sm transition-all duration-200 border-2",
-                                      newSetpointData.color === color
-                                        ? "border-gray-900 ring-1 ring-offset-1 ring-gray-400 scale-105"
-                                        : "border-gray-200 hover:scale-105"
-                                    )}
-                                    style={{ backgroundColor: color }}
-                                    title={color}
-                                  />
-                                ))}
-                                <div className="relative ml-1 flex items-center justify-center">
-                                  <input
-                                    type="color"
-                                    value={newSetpointData.color}
-                                    onChange={(e) => setNewSetpoint({
-                                      ...newSetpoint,
-                                      [parameter._id]: { ...newSetpointData, color: e.target.value }
-                                    })}
-                                    className="h-8 w-8 cursor-pointer opacity-0 absolute inset-0 z-10"
-                                  />
-                                  <div
-                                    className="w-8 h-8 rounded-sm border-2 border-gray-200 flex items-center justify-center transition-all duration-200 hover:border-gray-400"
-                                    style={{ backgroundColor: newSetpointData.color }}
-                                    title="Personalizado"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Condition & Notifications */}
-                            <div>
-                              <Label className="text-xs font-semibold mb-2 block text-gray-700">Opciones</Label>
-                              <div className="flex flex-col space-y-2">
-                                <IonSelect
-                                  value={newSetpointData.condition}
-                                  onIonChange={(e) => setNewSetpoint({
-                                    ...newSetpoint,
-                                    [parameter._id]: { ...newSetpointData, condition: e.detail.value as 'normal' | 'warning' | 'critical' }
-                                  })}
-                                  className="flex min-h-[40px] w-full rounded-xl border border-gray-200 bg-gray-50/50 px-3 py-0 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#60B883]/50 focus:border-transparent transition-all"
-                                >
-                                  <IonSelectOption value="normal">Normal</IonSelectOption>
-                                  <IonSelectOption value="warning">Advertencia</IonSelectOption>
-                                  <IonSelectOption value="critical">Crítico</IonSelectOption>
-                                </IonSelect>
-                                <label className="flex items-center gap-1 space-x-1 cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    checked={newSetpointData.notificationsEnabled}
-                                    onChange={(e) => setNewSetpoint({
-                                      ...newSetpoint,
-                                      [parameter._id]: { ...newSetpointData, notificationsEnabled: e.target.checked }
-                                    })}
-                                    className="h-3 w-3"
-                                  />
-                                  <span className="text-xs">Notificaciones</span>
-                                </label>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Notification Condition - Only if enabled */}
-                          {newSetpointData.notificationsEnabled && (
-                            <div className="flex items-center space-x-2 pt-2 border-t">
-                              <Label className="text-xs">Alertar cuando:</Label>
-                              <IonSelect
-                                value={newSetpointData.notificationCondition}
-                                onIonChange={(e) => setNewSetpoint({
-                                  ...newSetpoint,
-                                  [parameter._id]: { ...newSetpointData, notificationCondition: e.detail.value as 'inside' | 'outside' }
-                                })}
-                                className="flex min-h-[32px] flex-1 rounded-md border border-input bg-background px-2 py-0 text-xs max-w-xs"
-                              >
-                                <IonSelectOption value="outside">Fuera del rango</IonSelectOption>
-                                <IonSelectOption value="inside">Dentro del rango</IonSelectOption>
-                              </IonSelect>
-                            </div>
+                          {locationParameters.length > 0 && (
+                            <span className="text-[11px] font-semibold text-[#3eaa76] bg-green-50 border border-green-100 px-2 py-0.5 rounded-full shrink-0">
+                              {locationParameters.length}
+                            </span>
                           )}
+                          <ChevronDown className={cn("w-4 h-4 text-gray-400 transition-transform duration-300 shrink-0", isOpen ? "rotate-180" : "")} />
+                        </button>
 
-                          <IonButton
-                            onClick={() => handleCreateSetpoint(parameter._id)}
-                            disabled={creatingSetpoint[parameter._id] || (isAdminView && !isClientSelected)}
-                            className="w-full mt-2 font-bold rounded-xl shadow-sm uppercase tracking-wider text-xs"
-                            style={{ '--background': '#3eaa76', '--background-hover': '#8ecb2f', '--color': '#ffffff', '--padding-top': '1rem', '--padding-bottom': '1rem' }}
-                          >
-                            {creatingSetpoint[parameter._id] ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                CREANDO...
-                              </>
-                            ) : (
-                              <>
-                                <Plus className="w-4 h-4 mr-1.5" />
-                                AGREGAR SETPOINT
-                              </>
-                            )}
-                          </IonButton>
-                        </div>
+                        {/* Expandable: parameters with setpoints */}
+                        <div className={cn("transition-all duration-300 ease-in-out overflow-hidden", isOpen ? "max-h-[9999px] opacity-100" : "max-h-0 opacity-0")}>
+                          <div className="px-3 pb-3 pt-1 bg-[#f6fdf9] dark:bg-gray-900/50 flex flex-col gap-3">
+                            {locationParameters.length > 0 ? locationParameters.map((parameter) => {
+                              const paramSetpoints = setpoints[parameter._id] || [];
+                              const newSetpointData = newSetpoint[parameter._id] || {
+                                minValue: 0, maxValue: null, color: '#FF0000', label: '',
+                                condition: 'normal', notificationsEnabled: false,
+                                notificationCondition: 'outside', isRange: false
+                              };
 
-                        {/* Visual Range Bar - Compact */}
-                        {paramSetpoints.length > 0 && (() => {
-                          const sortedSetpoints = [...paramSetpoints].sort((a, b) => a.minValue - b.minValue);
-                          const minValue = Math.min(...sortedSetpoints.map(s => s.minValue));
-                          const maxValue = Math.max(...sortedSetpoints.map(s => s.maxValue || s.minValue));
-                          const range = maxValue - minValue || 1;
-
-                          return (
-                            <div className="mb-3 p-3 bg-muted/50 rounded-lg">
-                              <div className="flex items-center justify-between mb-2">
-                                <Label className="text-xs font-semibold">Vista de Rangos</Label>
-                                <span className="text-xs text-muted-foreground">
-                                  {sortedSetpoints.length} {sortedSetpoints.length === 1 ? 'rango' : 'rangos'} • {parameter.unit}
-                                </span>
-                              </div>
-                              <div className="relative h-8 bg-gray-100 rounded overflow-hidden border border-gray-200">
-                                {sortedSetpoints.map((setpoint) => {
-                                  const leftPercent = ((setpoint.minValue - minValue) / range) * 100;
-                                  const widthPercent = setpoint.maxValue !== null
-                                    ? ((setpoint.maxValue - setpoint.minValue) / range) * 100
-                                    : Math.max(3, 100 / sortedSetpoints.length); // Min 3% or equal distribution
-
-                                  return (
-                                    <div
-                                      key={setpoint._id}
-                                      className="absolute h-full opacity-85 hover:opacity-100 transition-opacity border-r border-white/50"
-                                      style={{
-                                        left: `${leftPercent}%`,
-                                        width: `${widthPercent}%`,
-                                        backgroundColor: setpoint.color,
-                                        minWidth: '20px'
-                                      }}
-                                      title={`${setpoint.label || 'Rango'}: ${setpoint.minValue}${setpoint.maxValue !== null ? ` - ${setpoint.maxValue}` : ''} ${parameter.unit}`}
-                                    >
-                                      {widthPercent > 15 && (
-                                        <div className="absolute inset-0 flex items-center justify-center text-white text-[10px] font-bold px-1 truncate">
-                                          {setpoint.label || `${setpoint.minValue}${setpoint.maxValue !== null ? `-${setpoint.maxValue}` : ''}`}
-                                        </div>
+                              return (
+                                <div key={parameter._id} className="bg-white dark:bg-gray-800 rounded-xl shadow-[0_1px_6px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-700 ml-3 p-3 space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <h4 className="font-semibold text-sm">{parameter.name}</h4>
+                                      {area && (
+                                        <p className="text-xs text-muted-foreground">{area.name} → {location.name}</p>
                                       )}
                                     </div>
-                                  );
-                                })}
-                                {/* Scale markers */}
-                                <div className="absolute -bottom-4 left-0 right-0 flex justify-between text-[10px] text-gray-500">
-                                  <span>{minValue.toFixed(1)}</span>
-                                  <span>{maxValue.toFixed(1)}</span>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })()}
+                                  </div>
 
-                        {/* Setpoints List - Compact */}
-                        <div className="space-y-2">
-                          {(() => {
-                            // Sort setpoints by minValue
-                            const sortedSetpoints = [...paramSetpoints].sort((a, b) => a.minValue - b.minValue);
-                            return sortedSetpoints.map((setpoint) => (
-                              <div
-                                key={setpoint._id}
-                                className="flex items-center gap-2 p-2 rounded-lg border transition-all hover:shadow-sm"
-                                style={{
-                                  borderColor: setpoint.color,
-                                  backgroundColor: `${setpoint.color}08`
-                                }}
-                              >
-                                {editingSetpoint === setpoint._id ? (
-                                  <>
-                                    {(() => {
-                                      if (!editingSetpointData[setpoint._id]) {
-                                        initializeSetpointEditing(setpoint);
-                                      }
-                                      return null;
-                                    })()}
-                                    <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-2">
-                                      <div className="flex items-center space-x-1">
+                                  {/* New Setpoint Form - Compact */}
+                                  <div className="p-4 bg-white rounded-2xl border border-dashed border-gray-300 space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                                      {/* Range Values */}
+                                      <div className="md:col-span-2">
+                                        <div className="flex items-center space-x-2 h-full">
+                                          <div className="float-group w-full h-full flex items-center">
+                                            <input
+                                              type="number"
+                                              step="any"
+                                              placeholder=" "
+                                              value={newSetpointData.minValue !== null && newSetpointData.minValue !== undefined ? newSetpointData.minValue : ''}
+                                              onChange={(e) => {
+                                                const val = e.target.value;
+                                                const numVal = val === '' ? null : parseFloat(val);
+                                                setNewSetpoint({
+                                                  ...newSetpoint,
+                                                  [parameter._id]: {
+                                                    ...newSetpointData,
+                                                    minValue: numVal !== null && !isNaN(numVal) ? numVal : 0
+                                                  }
+                                                });
+                                              }}
+                                              className="float-input"
+                                            />
+                                            <label className="float-label">Min *</label>
+                                          </div>
+                                          <span className="text-muted-foreground">-</span>
+                                          <div className="float-group w-full h-full flex items-center">
+                                            <input
+                                              type="number"
+                                              step="any"
+                                              placeholder=" "
+                                              value={newSetpointData.maxValue !== null && newSetpointData.maxValue !== undefined ? newSetpointData.maxValue : ''}
+                                              onChange={(e) => {
+                                                const val = e.target.value;
+                                                const numVal = val === '' ? null : parseFloat(val);
+                                                setNewSetpoint({
+                                                  ...newSetpoint,
+                                                  [parameter._id]: {
+                                                    ...newSetpointData,
+                                                    maxValue: numVal !== null && !isNaN(numVal) ? numVal : null,
+                                                    isRange: val !== '' && !isNaN(parseFloat(val))
+                                                  }
+                                                });
+                                              }}
+                                              className="float-input"
+                                            />
+                                            <label className="float-label">Max</label>
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      {/* Label */}
+                                      <div className="h-full flex items-center">
                                         <div className="float-group w-full">
                                           <input
-                                            type="number"
-                                            step="any"
-                                            value={editingSetpointData[setpoint._id]?.minValue ?? 0}
-                                            onChange={(e) => {
-                                              const val = e.target.value;
-                                              const numVal = val === '' ? 0 : parseFloat(val);
-                                              updateSetpointEditingField(setpoint._id, 'minValue', !isNaN(numVal) ? numVal : 0);
-                                            }}
-                                            disabled={updatingSetpoint[setpoint._id]}
+                                            type="text"
                                             placeholder=" "
-                                            className="float-input min-h-[32px] pt-3 pb-1 px-2 text-xs"
+                                            value={newSetpointData.label}
+                                            onChange={(e) => setNewSetpoint({
+                                              ...newSetpoint,
+                                              [parameter._id]: { ...newSetpointData, label: e.target.value }
+                                            })}
+                                            className="float-input"
                                           />
-                                          <label className="float-label text-[10px] top-[10px]">Min</label>
-                                        </div>
-                                        <span className="text-muted-foreground">-</span>
-                                        <div className="float-group w-full">
-                                          <input
-                                            type="number"
-                                            step="any"
-                                            value={(editingSetpointData[setpoint._id]?.maxValue ?? null) !== null ? String(editingSetpointData[setpoint._id]!.maxValue) : ''}
-                                            onChange={(e) => {
-                                              const val = e.target.value;
-                                              const numVal = val === '' ? null : parseFloat(val);
-                                              updateSetpointEditingField(setpoint._id, 'maxValue', numVal !== null && !isNaN(numVal) ? numVal : null);
-                                            }}
-                                            disabled={updatingSetpoint[setpoint._id]}
-                                            placeholder=" "
-                                            className="float-input min-h-[32px] pt-3 pb-1 px-2 text-xs"
-                                          />
-                                          <label className="float-label text-[10px] top-[10px]">Max</label>
+                                          <label className="float-label">Etiqueta</label>
                                         </div>
                                       </div>
 
-                                      <div className="float-group">
-                                        <input
-                                          type="text"
-                                          value={editingSetpointData[setpoint._id]?.label || ''}
-                                          onChange={(e) => updateSetpointEditingField(setpoint._id, 'label', e.target.value)}
-                                          disabled={updatingSetpoint[setpoint._id]}
-                                          placeholder=" "
-                                          className="float-input min-h-[32px] pt-3 pb-1 px-2 text-xs"
-                                        />
-                                        <label className="float-label text-[10px] top-[10px]">Etiqueta</label>
-                                      </div>
-
-                                      <div className="flex items-center flex-wrap gap-1.5 md:col-span-4 mt-1 mb-1">
-                                        {['#3eaa76', '#9EE538', '#51E8D4', '#0091A0', '#EF4444', '#F97316', '#F59E0B', '#EAB308', '#84CC16', '#22C55E'].map((color) => (
-                                          <button
-                                            key={color}
-                                            type="button"
-                                            onClick={() => updateSetpointEditingField(setpoint._id, 'color', color)}
-                                            disabled={updatingSetpoint[setpoint._id]}
-                                            className={cn(
-                                              "w-5 h-8 rounded-sm transition-all duration-200 border-2",
-                                              editingSetpointData[setpoint._id]?.color === color
-                                                ? "border-gray-900 ring-1 ring-offset-1 ring-gray-400 scale-105"
-                                                : "border-gray-200 hover:scale-105"
-                                            )}
-                                            style={{ backgroundColor: color }}
-                                            title={color}
-                                          />
-                                        ))}
-                                        <div className="relative ml-1 flex items-center justify-center">
-                                          <input
-                                            type="color"
-                                            value={editingSetpointData[setpoint._id]?.color || '#3eaa76'}
-                                            onChange={(e) => updateSetpointEditingField(setpoint._id, 'color', e.target.value)}
-                                            disabled={updatingSetpoint[setpoint._id]}
-                                            className="h-8 w-8 cursor-pointer opacity-0 absolute inset-0 z-10"
-                                          />
-                                          <div
-                                            className="w-8 h-8 rounded-sm border-2 border-gray-200 flex items-center justify-center transition-all duration-200 hover:border-gray-400"
-                                            style={{ backgroundColor: editingSetpointData[setpoint._id]?.color || '#3eaa76' }}
-                                            title="Personalizado"
-                                          />
+                                      {/* Color Palette */}
+                                      <div>
+                                        <Label className="text-xs font-semibold mb-1 block">Color</Label>
+                                        <div className="flex items-center flex-wrap gap-1.5">
+                                          {['#3eaa76', '#9EE538', '#51E8D4', '#0091A0', '#EF4444', '#F97316', '#F59E0B', '#EAB308', '#84CC16', '#22C55E'].map((color) => (
+                                            <button
+                                              key={color}
+                                              type="button"
+                                              onClick={() => setNewSetpoint({
+                                                ...newSetpoint,
+                                                [parameter._id]: { ...newSetpointData, color }
+                                              })}
+                                              className={cn(
+                                                "w-5 h-8 rounded-sm transition-all duration-200 border-2",
+                                                newSetpointData.color === color
+                                                  ? "border-gray-900 ring-1 ring-offset-1 ring-gray-400 scale-105"
+                                                  : "border-gray-200 hover:scale-105"
+                                              )}
+                                              style={{ backgroundColor: color }}
+                                              title={color}
+                                            />
+                                          ))}
+                                          <div className="relative ml-1 flex items-center justify-center">
+                                            <input
+                                              type="color"
+                                              value={newSetpointData.color}
+                                              onChange={(e) => setNewSetpoint({
+                                                ...newSetpoint,
+                                                [parameter._id]: { ...newSetpointData, color: e.target.value }
+                                              })}
+                                              className="h-8 w-8 cursor-pointer opacity-0 absolute inset-0 z-10"
+                                            />
+                                            <div
+                                              className="w-8 h-8 rounded-sm border-2 border-gray-200 flex items-center justify-center transition-all duration-200 hover:border-gray-400"
+                                              style={{ backgroundColor: newSetpointData.color }}
+                                              title="Personalizado"
+                                            />
+                                          </div>
                                         </div>
                                       </div>
 
-                                      <div className="flex items-center space-x-1">
+                                      {/* Condition & Notifications */}
+                                      <div>
+                                        <Label className="text-xs font-semibold mb-2 block text-gray-700">Opciones</Label>
+                                        <div className="flex flex-col space-y-2">
+                                          <IonSelect
+                                            value={newSetpointData.condition}
+                                            onIonChange={(e) => setNewSetpoint({
+                                              ...newSetpoint,
+                                              [parameter._id]: { ...newSetpointData, condition: e.detail.value as 'normal' | 'warning' | 'critical' }
+                                            })}
+                                            className="flex min-h-[40px] w-full rounded-xl border border-gray-200 bg-gray-50/50 px-3 py-0 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#60B883]/50 focus:border-transparent transition-all"
+                                          >
+                                            <IonSelectOption value="normal">Normal</IonSelectOption>
+                                            <IonSelectOption value="warning">Advertencia</IonSelectOption>
+                                            <IonSelectOption value="critical">Crítico</IonSelectOption>
+                                          </IonSelect>
+                                          <label className="flex items-center gap-1 space-x-1 cursor-pointer">
+                                            <input
+                                              type="checkbox"
+                                              checked={newSetpointData.notificationsEnabled}
+                                              onChange={(e) => setNewSetpoint({
+                                                ...newSetpoint,
+                                                [parameter._id]: { ...newSetpointData, notificationsEnabled: e.target.checked }
+                                              })}
+                                              className="h-3 w-3"
+                                            />
+                                            <span className="text-xs">Notificaciones</span>
+                                          </label>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Notification Condition - Only if enabled */}
+                                    {newSetpointData.notificationsEnabled && (
+                                      <div className="flex items-center space-x-2 pt-2 border-t">
+                                        <Label className="text-xs">Alertar cuando:</Label>
                                         <IonSelect
-                                          value={editingSetpointData[setpoint._id]?.condition || 'normal'}
-                                          onIonChange={(e) => updateSetpointEditingField(setpoint._id, 'condition', e.detail.value as 'normal' | 'warning' | 'critical')}
-                                          disabled={updatingSetpoint[setpoint._id]}
-                                          className="flex min-h-[32px] flex-1 rounded-md border border-input bg-background px-2 py-0 text-xs"
+                                          value={newSetpointData.notificationCondition}
+                                          onIonChange={(e) => setNewSetpoint({
+                                            ...newSetpoint,
+                                            [parameter._id]: { ...newSetpointData, notificationCondition: e.detail.value as 'inside' | 'outside' }
+                                          })}
+                                          className="flex min-h-[32px] flex-1 rounded-md border border-input bg-background px-2 py-0 text-xs max-w-xs"
                                         >
-                                          <IonSelectOption value="normal">Normal</IonSelectOption>
-                                          <IonSelectOption value="warning">Advertencia</IonSelectOption>
-                                          <IonSelectOption value="critical">Crítico</IonSelectOption>
+                                          <IonSelectOption value="outside">Fuera del rango</IonSelectOption>
+                                          <IonSelectOption value="inside">Dentro del rango</IonSelectOption>
                                         </IonSelect>
-                                        <label className="flex items-center space-x-1 cursor-pointer">
-                                          <input
-                                            type="checkbox"
-                                            checked={editingSetpointData[setpoint._id]?.notificationsEnabled || false}
-                                            onChange={(e) => updateSetpointEditingField(setpoint._id, 'notificationsEnabled', e.target.checked)}
-                                            disabled={updatingSetpoint[setpoint._id]}
-                                            className="h-3 w-3"
-                                          />
-                                          <span className="text-xs">🔔</span>
-                                        </label>
                                       </div>
-                                      <div className="flex gap-2 items-center md:col-span-4 mt-2">
-                                        <IonButton
-                                          fill="solid"
-                                          size="small"
-                                          onClick={() => handleSaveSetpoint(setpoint._id, parameter._id)}
-                                          disabled={updatingSetpoint[setpoint._id] || !editingSetpointData[setpoint._id]}
-                                          className="font-bold text-white rounded shadow-sm text-xs"
-                                          style={{ '--background': '#3eaa76', '--background-hover': '#338f61', '--padding-top': '0.5rem', '--padding-bottom': '0.5rem', '--padding-start': '1rem', '--padding-end': '1rem' }}
-                                        >
-                                          {updatingSetpoint[setpoint._id] ? (
-                                            <>
-                                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                              Guardando...
-                                            </>
-                                          ) : (
-                                            'GUARDAR'
-                                          )}
-                                        </IonButton>
-                                        <IonButton
-                                          fill="clear"
-                                          onClick={() => {
-                                            setEditingSetpointData(prev => {
-                                              const newState = { ...prev };
-                                              delete newState[setpoint._id];
-                                              return newState;
-                                            });
-                                            setEditingSetpoint(null);
+                                    )}
+
+                                    <IonButton
+                                      onClick={() => handleCreateSetpoint(parameter._id)}
+                                      disabled={creatingSetpoint[parameter._id] || (isAdminView && !isClientSelected)}
+                                      className="w-full mt-2 font-bold rounded-xl shadow-sm uppercase tracking-wider text-xs"
+                                      style={{ '--background': '#3eaa76', '--background-hover': '#8ecb2f', '--color': '#ffffff', '--padding-top': '1rem', '--padding-bottom': '1rem' }}
+                                    >
+                                      {creatingSetpoint[parameter._id] ? (
+                                        <>
+                                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                          CREANDO...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Plus className="w-4 h-4 mr-1.5" />
+                                          AGREGAR SETPOINT
+                                        </>
+                                      )}
+                                    </IonButton>
+                                  </div>
+
+                                  {/* Visual Range Bar - Compact */}
+                                  {paramSetpoints.length > 0 && (() => {
+                                    const sortedSetpoints = [...paramSetpoints].sort((a, b) => a.minValue - b.minValue);
+                                    const minValue = Math.min(...sortedSetpoints.map(s => s.minValue));
+                                    const maxValue = Math.max(...sortedSetpoints.map(s => s.maxValue || s.minValue));
+                                    const range = maxValue - minValue || 1;
+
+                                    return (
+                                      <div className="mb-3 p-3 bg-muted/50 rounded-lg">
+                                        <div className="flex items-center justify-between mb-2">
+                                          <Label className="text-xs font-semibold">Vista de Rangos</Label>
+                                          <span className="text-xs text-muted-foreground">
+                                            {sortedSetpoints.length} {sortedSetpoints.length === 1 ? 'rango' : 'rangos'} • {parameter.unit}
+                                          </span>
+                                        </div>
+                                        <div className="relative h-8 bg-gray-100 rounded overflow-hidden border border-gray-200">
+                                          {sortedSetpoints.map((setpoint) => {
+                                            const leftPercent = ((setpoint.minValue - minValue) / range) * 100;
+                                            const widthPercent = setpoint.maxValue !== null
+                                              ? ((setpoint.maxValue - setpoint.minValue) / range) * 100
+                                              : Math.max(3, 100 / sortedSetpoints.length); // Min 3% or equal distribution
+
+                                            return (
+                                              <div
+                                                key={setpoint._id}
+                                                className="absolute h-full opacity-85 hover:opacity-100 transition-opacity border-r border-white/50"
+                                                style={{
+                                                  left: `${leftPercent}%`,
+                                                  width: `${widthPercent}%`,
+                                                  backgroundColor: setpoint.color,
+                                                  minWidth: '20px'
+                                                }}
+                                                title={`${setpoint.label || 'Rango'}: ${setpoint.minValue}${setpoint.maxValue !== null ? ` - ${setpoint.maxValue}` : ''} ${parameter.unit}`}
+                                              >
+                                                {widthPercent > 15 && (
+                                                  <div className="absolute inset-0 flex items-center justify-center text-white text-[10px] font-bold px-1 truncate">
+                                                    {setpoint.label || `${setpoint.minValue}${setpoint.maxValue !== null ? `-${setpoint.maxValue}` : ''}`}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            );
+                                          })}
+                                          {/* Scale markers */}
+                                          <div className="absolute -bottom-4 left-0 right-0 flex justify-between text-[10px] text-gray-500">
+                                            <span>{minValue.toFixed(1)}</span>
+                                            <span>{maxValue.toFixed(1)}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })()}
+
+                                  {/* Setpoints List - Compact */}
+                                  <div className="space-y-2">
+                                    {(() => {
+                                      // Sort setpoints by minValue
+                                      const sortedSetpoints = [...paramSetpoints].sort((a, b) => a.minValue - b.minValue);
+                                      return sortedSetpoints.map((setpoint) => (
+                                        <div
+                                          key={setpoint._id}
+                                          className="flex items-center gap-2 p-2 rounded-lg border transition-all hover:shadow-sm"
+                                          style={{
+                                            borderColor: setpoint.color,
+                                            backgroundColor: `${setpoint.color}08`
                                           }}
                                         >
-                                          <X className="w-5 h-5 text-gray-500" />
-                                        </IonButton>
+                                          {editingSetpoint === setpoint._id ? (
+                                            <>
+                                              {(() => {
+                                                if (!editingSetpointData[setpoint._id]) {
+                                                  initializeSetpointEditing(setpoint);
+                                                }
+                                                return null;
+                                              })()}
+                                              <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-2">
+                                                <div className="flex items-center space-x-1">
+                                                  <div className="float-group w-full">
+                                                    <input
+                                                      type="number"
+                                                      step="any"
+                                                      value={editingSetpointData[setpoint._id]?.minValue ?? 0}
+                                                      onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        const numVal = val === '' ? 0 : parseFloat(val);
+                                                        updateSetpointEditingField(setpoint._id, 'minValue', !isNaN(numVal) ? numVal : 0);
+                                                      }}
+                                                      disabled={updatingSetpoint[setpoint._id]}
+                                                      placeholder=" "
+                                                      className="float-input min-h-[32px] pt-3 pb-1 px-2 text-xs"
+                                                    />
+                                                    <label className="float-label text-[10px] top-[10px]">Min</label>
+                                                  </div>
+                                                  <span className="text-muted-foreground">-</span>
+                                                  <div className="float-group w-full">
+                                                    <input
+                                                      type="number"
+                                                      step="any"
+                                                      value={(editingSetpointData[setpoint._id]?.maxValue ?? null) !== null ? String(editingSetpointData[setpoint._id]!.maxValue) : ''}
+                                                      onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        const numVal = val === '' ? null : parseFloat(val);
+                                                        updateSetpointEditingField(setpoint._id, 'maxValue', numVal !== null && !isNaN(numVal) ? numVal : null);
+                                                      }}
+                                                      disabled={updatingSetpoint[setpoint._id]}
+                                                      placeholder=" "
+                                                      className="float-input min-h-[32px] pt-3 pb-1 px-2 text-xs"
+                                                    />
+                                                    <label className="float-label text-[10px] top-[10px]">Max</label>
+                                                  </div>
+                                                </div>
+
+                                                <div className="float-group">
+                                                  <input
+                                                    type="text"
+                                                    value={editingSetpointData[setpoint._id]?.label || ''}
+                                                    onChange={(e) => updateSetpointEditingField(setpoint._id, 'label', e.target.value)}
+                                                    disabled={updatingSetpoint[setpoint._id]}
+                                                    placeholder=" "
+                                                    className="float-input min-h-[32px] pt-3 pb-1 px-2 text-xs"
+                                                  />
+                                                  <label className="float-label text-[10px] top-[10px]">Etiqueta</label>
+                                                </div>
+
+                                                <div className="flex items-center flex-wrap gap-1.5 md:col-span-4 mt-1 mb-1">
+                                                  {['#3eaa76', '#9EE538', '#51E8D4', '#0091A0', '#EF4444', '#F97316', '#F59E0B', '#EAB308', '#84CC16', '#22C55E'].map((color) => (
+                                                    <button
+                                                      key={color}
+                                                      type="button"
+                                                      onClick={() => updateSetpointEditingField(setpoint._id, 'color', color)}
+                                                      disabled={updatingSetpoint[setpoint._id]}
+                                                      className={cn(
+                                                        "w-5 h-8 rounded-sm transition-all duration-200 border-2",
+                                                        editingSetpointData[setpoint._id]?.color === color
+                                                          ? "border-gray-900 ring-1 ring-offset-1 ring-gray-400 scale-105"
+                                                          : "border-gray-200 hover:scale-105"
+                                                      )}
+                                                      style={{ backgroundColor: color }}
+                                                      title={color}
+                                                    />
+                                                  ))}
+                                                  <div className="relative ml-1 flex items-center justify-center">
+                                                    <input
+                                                      type="color"
+                                                      value={editingSetpointData[setpoint._id]?.color || '#3eaa76'}
+                                                      onChange={(e) => updateSetpointEditingField(setpoint._id, 'color', e.target.value)}
+                                                      disabled={updatingSetpoint[setpoint._id]}
+                                                      className="h-8 w-8 cursor-pointer opacity-0 absolute inset-0 z-10"
+                                                    />
+                                                    <div
+                                                      className="w-8 h-8 rounded-sm border-2 border-gray-200 flex items-center justify-center transition-all duration-200 hover:border-gray-400"
+                                                      style={{ backgroundColor: editingSetpointData[setpoint._id]?.color || '#3eaa76' }}
+                                                      title="Personalizado"
+                                                    />
+                                                  </div>
+                                                </div>
+
+                                                <div className="flex items-center space-x-1">
+                                                  <IonSelect
+                                                    value={editingSetpointData[setpoint._id]?.condition || 'normal'}
+                                                    onIonChange={(e) => updateSetpointEditingField(setpoint._id, 'condition', e.detail.value as 'normal' | 'warning' | 'critical')}
+                                                    disabled={updatingSetpoint[setpoint._id]}
+                                                    className="flex min-h-[32px] flex-1 rounded-md border border-input bg-background px-2 py-0 text-xs"
+                                                  >
+                                                    <IonSelectOption value="normal">Normal</IonSelectOption>
+                                                    <IonSelectOption value="warning">Advertencia</IonSelectOption>
+                                                    <IonSelectOption value="critical">Crítico</IonSelectOption>
+                                                  </IonSelect>
+                                                  <label className="flex items-center space-x-1 cursor-pointer">
+                                                    <input
+                                                      type="checkbox"
+                                                      checked={editingSetpointData[setpoint._id]?.notificationsEnabled || false}
+                                                      onChange={(e) => updateSetpointEditingField(setpoint._id, 'notificationsEnabled', e.target.checked)}
+                                                      disabled={updatingSetpoint[setpoint._id]}
+                                                      className="h-3 w-3"
+                                                    />
+                                                    <span className="text-xs">🔔</span>
+                                                  </label>
+                                                </div>
+                                                <div className="flex gap-2 items-center md:col-span-4 mt-2">
+                                                  <IonButton
+                                                    fill="solid"
+                                                    size="small"
+                                                    onClick={() => handleSaveSetpoint(setpoint._id, parameter._id)}
+                                                    disabled={updatingSetpoint[setpoint._id] || !editingSetpointData[setpoint._id]}
+                                                    className="font-bold text-white rounded shadow-sm text-xs"
+                                                    style={{ '--background': '#3eaa76', '--background-hover': '#338f61', '--padding-top': '0.5rem', '--padding-bottom': '0.5rem', '--padding-start': '1rem', '--padding-end': '1rem' }}
+                                                  >
+                                                    {updatingSetpoint[setpoint._id] ? (
+                                                      <>
+                                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                        Guardando...
+                                                      </>
+                                                    ) : (
+                                                      'GUARDAR'
+                                                    )}
+                                                  </IonButton>
+                                                  <IonButton
+                                                    fill="clear"
+                                                    onClick={() => {
+                                                      setEditingSetpointData(prev => {
+                                                        const newState = { ...prev };
+                                                        delete newState[setpoint._id];
+                                                        return newState;
+                                                      });
+                                                      setEditingSetpoint(null);
+                                                    }}
+                                                  >
+                                                    <X className="w-5 h-5 text-gray-500" />
+                                                  </IonButton>
+                                                </div>
+                                              </div>
+                                            </>
+                                          ) : (
+                                            <>
+                                              <div
+                                                className="w-8 h-8 rounded flex-shrink-0 border-2 border-white shadow-sm"
+                                                style={{ backgroundColor: setpoint.color }}
+                                              />
+                                              <div className="flex-1 min-w-0">
+                                                <div className="flex items-center space-x-1.5 flex-wrap">
+                                                  <span className="font-semibold text-sm truncate">
+                                                    {setpoint.label || `${setpoint.minValue}${setpoint.maxValue !== null ? `-${setpoint.maxValue}` : ''}`}
+                                                  </span>
+                                                  <span className={cn(
+                                                    "text-[10px] px-1.5 py-0.5 rounded font-medium",
+                                                    setpoint.condition === 'critical' ? 'bg-red-100 text-red-800' :
+                                                      setpoint.condition === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                                                        'bg-green-100 text-green-800'
+                                                  )}>
+                                                    {setpoint.condition === 'critical' ? 'Crítico' :
+                                                      setpoint.condition === 'warning' ? 'Adv' : 'Normal'}
+                                                  </span>
+                                                  {setpoint.notificationsEnabled && (
+                                                    <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
+                                                      🔔
+                                                    </span>
+                                                  )}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground truncate">
+                                                  {setpoint.maxValue !== null
+                                                    ? `${setpoint.minValue} - ${setpoint.maxValue} ${parameter.unit}`
+                                                    : `${setpoint.minValue} ${parameter.unit}`
+                                                  }
+                                                </div>
+                                              </div>
+                                              <div className="flex items-center space-x-1">
+                                                <IonButton
+                                                  fill="clear"
+                                                  onClick={() => setEditingSetpoint(setpoint._id)}
+                                                  className="hover:bg-blue-50"
+                                                  style={{ width: '28px', height: '28px', '--padding-start': '0', '--padding-end': '0' }}
+                                                >
+                                                  <Edit2 className="w-3.5 h-3.5 text-gray-600" />
+                                                </IonButton>
+                                                <IonButton
+                                                  fill="clear"
+                                                  color="danger"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setDeleteModalState({ isOpen: true, type: 'setpoint', targetId: setpoint._id });
+                                                  }}
+                                                  className="hover:bg-red-50"
+                                                  style={{ width: '28px', height: '28px', '--padding-start': '0', '--padding-end': '0' }}
+                                                >
+                                                  <Trash2 className="w-3.5 h-3.5" />
+                                                </IonButton>
+                                              </div>
+                                            </>
+                                          )}
+                                        </div>
+                                      ));
+                                    })()}
+                                    {paramSetpoints.length === 0 && (
+                                      <div className="text-center py-6 border-2 border-dashed rounded-lg bg-muted/30">
+                                        <p className="text-xs text-muted-foreground">
+                                          No hay setpoints. Use el formulario arriba para agregar rangos.
+                                        </p>
                                       </div>
-                                    </div>
-                                  </>
-                                ) : (
-                                  <>
-                                    <div
-                                      className="w-8 h-8 rounded flex-shrink-0 border-2 border-white shadow-sm"
-                                      style={{ backgroundColor: setpoint.color }}
-                                    />
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center space-x-1.5 flex-wrap">
-                                        <span className="font-semibold text-sm truncate">
-                                          {setpoint.label || `${setpoint.minValue}${setpoint.maxValue !== null ? `-${setpoint.maxValue}` : ''}`}
-                                        </span>
-                                        <span className={cn(
-                                          "text-[10px] px-1.5 py-0.5 rounded font-medium",
-                                          setpoint.condition === 'critical' ? 'bg-red-100 text-red-800' :
-                                            setpoint.condition === 'warning' ? 'bg-yellow-100 text-yellow-800' :
-                                              'bg-green-100 text-green-800'
-                                        )}>
-                                          {setpoint.condition === 'critical' ? 'Crítico' :
-                                            setpoint.condition === 'warning' ? 'Adv' : 'Normal'}
-                                        </span>
-                                        {setpoint.notificationsEnabled && (
-                                          <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
-                                            🔔
-                                          </span>
-                                        )}
-                                      </div>
-                                      <div className="text-xs text-muted-foreground truncate">
-                                        {setpoint.maxValue !== null
-                                          ? `${setpoint.minValue} - ${setpoint.maxValue} ${parameter.unit}`
-                                          : `${setpoint.minValue} ${parameter.unit}`
-                                        }
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center space-x-1">
-                                      <IonButton
-                                        fill="clear"
-                                        onClick={() => setEditingSetpoint(setpoint._id)}
-                                        className="hover:bg-blue-50"
-                                        style={{ width: '28px', height: '28px', '--padding-start': '0', '--padding-end': '0' }}
-                                      >
-                                        <Edit2 className="w-3.5 h-3.5 text-gray-600" />
-                                      </IonButton>
-                                      <IonButton
-                                        fill="clear"
-                                        color="danger"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setDeleteModalState({ isOpen: true, type: 'setpoint', targetId: setpoint._id });
-                                        }}
-                                        className="hover:bg-red-50"
-                                        style={{ width: '28px', height: '28px', '--padding-start': '0', '--padding-end': '0' }}
-                                      >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                      </IonButton>
-                                    </div>
-                                  </>
-                                )}
+                                    )}
+                                  </div>
+                                </div>
+                              );
+
+                            }) : (
+                              <div className="ml-3 text-center py-4 border border-dashed border-green-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800">
+                                <p className="text-xs text-gray-400 italic">No hay parámetros en esta ubicación</p>
                               </div>
-                            ));
-                          })()}
-                          {paramSetpoints.length === 0 && (
-                            <div className="text-center py-6 border-2 border-dashed rounded-lg bg-muted/30">
-                              <p className="text-xs text-muted-foreground">
-                                No hay setpoints. Use el formulario arriba para agregar rangos.
-                              </p>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
                   })}
-                {(!newParameter.locationId || filteredSetpointParameters.length === 0) && (
-                  <div className="text-center py-6 border-2 border-dashed rounded-lg bg-muted/30">
-                    <p className="text-xs text-muted-foreground">
-                      Seleccione una ubicación para ver setpoints.
-                    </p>
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
+      </Tabs >
 
       <DeleteConfirmModal
         isOpen={deleteModalState.isOpen}

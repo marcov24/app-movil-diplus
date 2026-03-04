@@ -3,7 +3,7 @@ import { useState, useEffect, type ReactNode } from 'react';
 import { IonPage, IonContent, IonFooter } from '@ionic/react';
 import {
   Activity, Bell, ChevronLeft, ChevronRight, Sun, Moon, LogOut,
-  Radio, Map, Users, MapPin, User
+  Radio, Map, Users, User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/hooks/useTheme';
@@ -57,7 +57,7 @@ export default function Layout({ children }: LayoutProps) {
   // Admin view nav items
   const adminNavItems = [
     { path: '/config', label: 'Clientes', icon: Users, id: 'clients' },
-    { path: '/areas', label: 'Áreas', icon: MapPin, id: 'areas' },
+    // { path: '/areas', label: 'Áreas', icon: MapPin, id: 'areas' },
   ];
 
   const navItems = isAdminView ? adminNavItems : clientNavItems;
