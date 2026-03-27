@@ -10,6 +10,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useAuth } from '../contexts/AuthContext';
 import { useClient } from '@/hooks/useClient';
 import { getClientByCode } from '../utils/api';
+import { useAlertsContext } from '../contexts/AlertsContext';
 import ProfileModal from './ProfileModal';
 
 interface LayoutProps {
@@ -25,6 +26,7 @@ export default function Layout({ children }: LayoutProps) {
   const { isAuthenticated, logout } = useAuth();
   const { clientCode } = useClient();
   const [_clientName, setClientName] = useState<string | null>(null);
+  const { unresolvedCount } = useAlertsContext();
 
   const isAdminView = !clientCode && isAuthenticated;
 
@@ -117,10 +119,18 @@ export default function Layout({ children }: LayoutProps) {
                     title={isSidebarCollapsed ? item.label : undefined}
                   >
                     <div className={cn(
-                      "flex items-center justify-center transition-colors",
+                      "flex items-center justify-center transition-colors relative",
                       active ? "text-[#3eaa76] dark:text-green-400" : "group-hover:text-gray-900 dark:group-hover:text-gray-100"
                     )}>
                       <item.icon size={20} strokeWidth={active ? 2.5 : 2} />
+                      {item.id === 'alerts' && unresolvedCount > 0 && (
+                        <span 
+                          key={unresolvedCount} // Remounts to trigger animation on change
+                          className="absolute -top-1.5 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-gray-900 animate-in zoom-in duration-300"
+                        >
+                          {unresolvedCount > 99 ? '99+' : unresolvedCount}
+                        </span>
+                      )}
                     </div>
                     <span className={cn(
                       "ml-3 text-sm transition-all duration-200",
@@ -193,7 +203,17 @@ export default function Layout({ children }: LayoutProps) {
                       : "text-gray-400 dark:text-gray-500"
                   )}
                 >
-                  <item.icon size={22} strokeWidth={active ? 2.5 : 1.8} />
+                  <div className="relative">
+                    <item.icon size={22} strokeWidth={active ? 2.5 : 1.8} />
+                    {item.id === 'alerts' && unresolvedCount > 0 && (
+                      <span 
+                        key={unresolvedCount}
+                        className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[1rem] items-center justify-center px-0.5 rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-gray-900 animate-in zoom-in duration-300"
+                      >
+                        {unresolvedCount > 99 ? '99+' : unresolvedCount}
+                      </span>
+                    )}
+                  </div>
                   <span className={cn(
                     "text-xs leading-tight",
                     active ? "font-bold" : "font-medium"

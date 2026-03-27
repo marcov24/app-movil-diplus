@@ -1,6 +1,7 @@
 import { IonApp } from '@ionic/react';
 import { HashRouter, Route, Switch, Redirect } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { AlertsProvider } from './contexts/AlertsContext';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import ClientRoute from './components/ClientRoute';
@@ -21,6 +22,7 @@ function App() {
     <IonApp>
       <AuthProvider>
         <HashRouter>
+          <AlertsProvider>
           <Switch>
             <Route path="/admin/login" exact component={AdminLogin} />
             <Route path="/admin/forgot-password" exact component={ForgotPassword} />
@@ -115,6 +117,7 @@ function App() {
               <Redirect to="/admin/login" />
             </Route>
           </Switch>
+          </AlertsProvider>
         </HashRouter>
       </AuthProvider>
     </IonApp>

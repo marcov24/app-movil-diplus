@@ -17,6 +17,8 @@ import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 import { cn } from '@/lib/utils';
 import { connectSocket, getSocket } from '../utils/socket';
+import { AlertsSkeleton } from '../components/Skeletons';
+import { useAlertsContext } from '../contexts/AlertsContext';
 
 interface Alert {
   _id: string;
@@ -43,6 +45,7 @@ export default function Alerts() {
   const history = useHistory();
   const { clientCode } = useClient();
   const api = createApiClient(clientCode);
+  const { refreshUnresolvedCount } = useAlertsContext();
   const [clientName, setClientName] = useState<string>('');
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [draggingAlertId, setDraggingAlertId] = useState<string | null>(null);
@@ -176,6 +179,7 @@ export default function Alerts() {
           : alert
       ));
       loadStats();
+      refreshUnresolvedCount();
     } catch (error) {
       console.error('Error resolving alert:', error);
     }
@@ -208,6 +212,10 @@ export default function Alerts() {
       }
     };
   }, [hasMore, loading]);
+
+  if (loading && alerts.length === 0) {
+    return <AlertsSkeleton />;
+  }
 
   return (
     <div className="space-y-4 md:space-y-8 w-full">
@@ -387,16 +395,7 @@ export default function Alerts() {
           <CardTitle>Alertas ({alerts.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading && alerts.length === 0 ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="relative">
-                <div className="absolute inset-0 bg-[#3eaa76]/30 rounded-full blur-xl animate-pulse -m-2"></div>
-                <div className="bg-white dark:bg-gray-800 p-4 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 dark:border-gray-700 relative z-10 flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 text-[#3eaa76] animate-spin" />
-                </div>
-              </div>
-            </div>
-          ) : alerts.length === 0 ? (
+          {alerts.length === 0 ? (
             <div className="text-center py-12">
               <CheckCircle2 className="w-16 h-16 mx-auto text-green-500 mb-4" />
               <p className="text-muted-foreground">No hay alertas disponibles</p>

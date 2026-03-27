@@ -7,12 +7,13 @@ import { createApiClient } from '../utils/apiClient';
 import { getClientByCode, getClientMqttStatus, getHistoricalData } from '../utils/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Activity, AlertTriangle, Bell, ChevronUp, ChevronDown, X, Power, PowerOff, ArrowLeft, WifiOff, Wifi, MapPin, Loader2, Plus, Settings } from 'lucide-react';
+import { Activity, AlertTriangle, Bell, ChevronUp, ChevronDown, X, Power, PowerOff, ArrowLeft, WifiOff, Wifi, MapPin, Plus, Settings } from 'lucide-react';
 import { IonButton, IonSelect, IonSelectOption } from '@ionic/react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { AreaChart, Area as RechartsArea, ResponsiveContainer } from 'recharts';
 import Areas from './Areas';
+import { DashboardSkeleton } from '../components/Skeletons';
 
 interface Area {
   _id: string;
@@ -450,16 +451,7 @@ export default function Dashboard() {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <div className="relative">
-          <div className="absolute inset-0 bg-[#3eaa76]/30 rounded-full blur-xl animate-pulse -m-2"></div>
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 dark:border-gray-700 relative z-10 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 text-[#3eaa76] animate-spin" />
-          </div>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (structure.length === 0) {

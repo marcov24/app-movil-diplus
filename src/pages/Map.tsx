@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
+// import L from 'leaflet';
+import { MapSkeleton } from '../components/Skeletons';
 import { useHistory } from 'react-router-dom';
 import { getClientByCode, getLocations, getParameters, getSetpoints, updateClientMapMarkersByCode } from '../utils/api';
 import { useClient } from '@/hooks/useClient';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Loader2, Gauge, ArrowRight, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { Gauge, ArrowRight, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { connectSocket, getSocket } from '@/utils/socket';
 import { IonSelect, IonSelectOption } from '@ionic/react';
 
@@ -213,16 +215,7 @@ export default function MapPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="relative">
-          <div className="absolute inset-0 bg-[#3eaa76]/30 rounded-full blur-xl animate-pulse -m-2"></div>
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 dark:border-gray-700 relative z-10 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 text-[#3eaa76] animate-spin" />
-          </div>
-        </div>
-      </div>
-    );
+    return <MapSkeleton />;
   }
 
   return (

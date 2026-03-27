@@ -5,10 +5,10 @@ import { getHistoricalData, getParameter, getSetpoints } from '../utils/api';
 import { Button } from '@/components/ui/button';
 import { useClient } from '@/hooks/useClient';
 import { Loader2, ArrowLeft, Calendar, Clock, Radio } from 'lucide-react';
-import { DateRange } from 'react-date-range';
-import type { RangeKeyDict } from 'react-date-range';
+import { DateRange, type RangeKeyDict } from 'react-date-range';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { AnalysisSkeleton } from '../components/Skeletons';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 import { IonButton } from '@ionic/react';
@@ -346,16 +346,7 @@ export default function Analysis() {
   };
 
   if (!parameter) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="relative">
-          <div className="absolute inset-0 bg-[#3eaa76]/30 rounded-full blur-xl animate-pulse -m-2"></div>
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 dark:border-gray-700 relative z-10 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 text-[#3eaa76] animate-spin" />
-          </div>
-        </div>
-      </div>
-    );
+    return <AnalysisSkeleton />;
   }
 
   const getSetpointColor = (value: number | null) => {

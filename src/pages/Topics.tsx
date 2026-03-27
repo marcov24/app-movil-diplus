@@ -3,7 +3,8 @@ import { useHistory } from 'react-router-dom';
 import { useClient } from '@/hooks/useClient';
 import { getActiveTopics, getClientByCode } from '../utils/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Radio, ArrowLeft } from 'lucide-react';
+import { ListSkeleton } from '../components/Skeletons';
+import { Radio, ArrowLeft } from 'lucide-react';
 
 export default function Topics() {
   const history = useHistory();
@@ -41,16 +42,7 @@ export default function Topics() {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="relative">
-          <div className="absolute inset-0 bg-[#3eaa76]/30 rounded-full blur-xl animate-pulse -m-2"></div>
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 dark:border-gray-700 relative z-10 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 text-[#3eaa76] animate-spin" />
-          </div>
-        </div>
-      </div>
-    );
+    return <ListSkeleton count={4} />;
   }
 
   return (
