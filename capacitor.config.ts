@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Sistema de Monitoreo',
   webDir: 'dist',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'http'
   }
 };
 
