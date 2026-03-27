@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 
 import { Label } from '@/components/ui/label';
-import { AlertTriangle, CheckCircle2, Loader2, Filter, RefreshCw, Calendar, ArrowLeft } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Loader2, Filter, RefreshCw, Calendar, ArrowLeft, Download, FileSpreadsheet, FileText } from 'lucide-react';
 import { IonSelect, IonSelectOption, IonButton, IonList, IonItemSliding, IonItem, IonItemOptions, IonItemOption } from '@ionic/react';
 import { DateRange } from 'react-date-range';
 import type { RangeKeyDict } from 'react-date-range';
@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { connectSocket, getSocket } from '../utils/socket';
 import { AlertsSkeleton } from '../components/Skeletons';
 import { useAlertsContext } from '../contexts/AlertsContext';
+import { exportToExcel, exportToPdf, formatAlertsForExport } from '../utils/exportUtils';
 
 interface Alert {
   _id: string;
@@ -53,6 +54,8 @@ export default function Alerts() {
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
   const [stats, setStats] = useState<any>(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
 
   // Filters
   const [isResolved, setIsResolved] = useState<string>('false');
@@ -236,13 +239,68 @@ export default function Alerts() {
           </div>
         )}
 
-        <div className="w-full flex flex-col px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 pt-3 pb-3">
-          <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-foreground leading-none">
-            Histórico de Alertas
-          </h2>
-          <p className="text-sm text-muted-foreground mt-2">
-            Visualice y gestione todas las alertas del sistema
-          </p>
+        <div className="w-full flex flex-row items-center justify-between gap-2 px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 pt-3 pb-3">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-foreground leading-none">
+              Histórico de Alertas
+            </h2>
+            <p className="text-sm text-muted-foreground mt-2">
+              Visualice y gestione todas las alertas del sistema
+            </p>
+          </div>
+          {alerts.length > 0 && (
+            <div className="relative flex-shrink-0" ref={exportMenuRef}>
+              <IonButton
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                className="text-sm font-semibold m-0 normal-case shadow-sm"
+                style={{
+                  '--background': '#3eaa76',
+                  '--background-hover': '#2d8a5e',
+                  '--background-activated': '#2d8a5e',
+                  '--color': 'white',
+                  '--border-radius': '8px',
+                  '--padding-top': '6px',
+                  '--padding-bottom': '6px',
+                  '--padding-start': '14px',
+                  '--padding-end': '14px',
+                } as React.CSSProperties}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Exportar
+              </IonButton>
+              {showExportMenu && (
+                <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <IonButton
+                    fill="clear"
+                    expand="full"
+                    onClick={() => {
+                      const { headers, rows } = formatAlertsForExport(alerts);
+                      exportToExcel({ fileName: `alertas_${clientName || 'reporte'}`, sheetName: 'Alertas', headers, rows });
+                      setShowExportMenu(false);
+                    }}
+                    className="m-0 normal-case text-sm [--color:theme(colors.gray.700)] dark:[--color:theme(colors.gray.200)] [--padding-start:16px]"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-green-600 mr-3" />
+                    Exportar como Excel
+                  </IonButton>
+                  <div className="border-t border-gray-100 dark:border-gray-700" />
+                  <IonButton
+                    fill="clear"
+                    expand="full"
+                    onClick={() => {
+                      const { headers, rows } = formatAlertsForExport(alerts);
+                      exportToPdf({ fileName: `alertas_${clientName || 'reporte'}`, title: 'Histórico de Alertas', subtitle: clientName ? `Cliente: ${clientName}` : undefined, headers, rows });
+                      setShowExportMenu(false);
+                    }}
+                    className="m-0 normal-case text-sm [--color:theme(colors.gray.700)] dark:[--color:theme(colors.gray.200)] [--padding-start:16px]"
+                  >
+                    <FileText className="w-4 h-4 text-red-500 mr-3" />
+                    Exportar como PDF
+                  </IonButton>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

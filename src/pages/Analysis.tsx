@@ -4,7 +4,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { getHistoricalData, getParameter, getSetpoints } from '../utils/api';
 import { Button } from '@/components/ui/button';
 import { useClient } from '@/hooks/useClient';
-import { Loader2, ArrowLeft, Calendar, Clock, Radio } from 'lucide-react';
+import { Loader2, ArrowLeft, Calendar, Clock, Radio, Download, FileSpreadsheet, FileText } from 'lucide-react';
 import { DateRange, type RangeKeyDict } from 'react-date-range';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -16,6 +16,7 @@ import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import { io, Socket } from 'socket.io-client';
 import { SOCKET_URL } from '../utils/api';
+import { exportToExcel, exportToPdf, formatAnalysisForExport } from '../utils/exportUtils';
 
 interface Parameter {
   _id: string;
@@ -131,6 +132,8 @@ export default function Analysis() {
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const datePickerRef = useRef<HTMLDivElement>(null);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
 
   // Real-time data state
   const [realtimeData, setRealtimeData] = useState<[number, number][]>([]);
@@ -412,6 +415,65 @@ export default function Analysis() {
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-[#3eaa76] truncate flex-1">
             Análisis: {parameter.name}
           </h2>
+          {rawData.length > 0 && (
+            <div className="relative" ref={exportMenuRef}>
+              <IonButton
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                className="text-sm font-semibold m-0 normal-case shadow-sm"
+                style={{
+                  '--background': '#3eaa76',
+                  '--background-hover': '#2d8a5e',
+                  '--background-activated': '#2d8a5e',
+                  '--color': 'white',
+                  '--border-radius': '8px',
+                  '--padding-top': '6px',
+                  '--padding-bottom': '6px',
+                  '--padding-start': '14px',
+                  '--padding-end': '14px',
+                } as React.CSSProperties}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Exportar</span>
+              </IonButton>
+              {showExportMenu && (
+                <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <IonButton
+                    fill="clear"
+                    expand="full"
+                    onClick={() => {
+                      const { headers, rows } = formatAnalysisForExport(rawData, parameter.name, parameter.unit);
+                      exportToExcel({ fileName: `analisis_${parameter.name}`, sheetName: 'Datos', headers, rows });
+                      setShowExportMenu(false);
+                    }}
+                    className="m-0 normal-case text-sm [--color:theme(colors.gray.700)] dark:[--color:theme(colors.gray.200)] [--padding-start:16px]"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-green-600 mr-3" />
+                    Exportar como Excel
+                  </IonButton>
+                  <div className="border-t border-gray-100 dark:border-gray-700" />
+                  <IonButton
+                    fill="clear"
+                    expand="full"
+                    onClick={() => {
+                      const { headers, rows } = formatAnalysisForExport(rawData, parameter.name, parameter.unit);
+                      exportToPdf({
+                        fileName: `analisis_${parameter.name}`,
+                        title: `Análisis: ${parameter.name}`,
+                        subtitle: `${parameter.locationId.areaId.name} → ${parameter.locationId.name} | Unidad: ${parameter.unit}`,
+                        headers,
+                        rows,
+                      });
+                      setShowExportMenu(false);
+                    }}
+                    className="m-0 normal-case text-sm [--color:theme(colors.gray.700)] dark:[--color:theme(colors.gray.200)] [--padding-start:16px]"
+                  >
+                    <FileText className="w-4 h-4 text-red-500 mr-3" />
+                    Exportar como PDF
+                  </IonButton>
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <p className="text-sm sm:text-base text-muted-foreground mt-1 sm:mt-2">
           {parameter.locationId.areaId.name} → {parameter.locationId.name}
