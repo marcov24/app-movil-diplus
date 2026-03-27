@@ -3,6 +3,48 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
+
+// ──────────────────────────────────────────────
+// Platform detection
+// ──────────────────────────────────────────────
+
+function isNativeMobile(): boolean {
+  return Capacitor.isNativePlatform();
+}
+
+/**
+ * On native mobile, saves to cache and opens the Share sheet.
+ * On web/browser, triggers a normal download.
+ */
+async function saveFileNative(fileName: string, base64Data: string, _mimeType: string) {
+  // Write to cache directory
+  const result = await Filesystem.writeFile({
+    path: fileName,
+    data: base64Data,
+    directory: Directory.Cache,
+  });
+
+  // Share the file so the user can choose where to save / open it
+  await Share.share({
+    title: fileName,
+    url: result.uri,
+    dialogTitle: `Compartir ${fileName}`,
+  });
+}
+
+function downloadBlobBrowser(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 // ──────────────────────────────────────────────
 // Excel Export
@@ -15,7 +57,7 @@ interface ExcelExportOptions {
   rows: (string | number)[][];
 }
 
-export function exportToExcel({ fileName, sheetName, headers, rows }: ExcelExportOptions) {
+export async function exportToExcel({ fileName, sheetName, headers, rows }: ExcelExportOptions) {
   const worksheetData = [headers, ...rows];
   const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
 
@@ -28,7 +70,19 @@ export function exportToExcel({ fileName, sheetName, headers, rows }: ExcelExpor
 
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-  XLSX.writeFile(workbook, `${fileName}.xlsx`);
+
+  const fullName = `${fileName}.xlsx`;
+
+  if (isNativeMobile()) {
+    // Generate as base64 for native
+    const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'base64' });
+    await saveFileNative(fullName, wbout, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  } else {
+    // Browser download
+    const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    downloadBlobBrowser(blob, fullName);
+  }
 }
 
 // ──────────────────────────────────────────────
@@ -44,7 +98,7 @@ interface PdfExportOptions {
   orientation?: 'portrait' | 'landscape';
 }
 
-export function exportToPdf({ fileName, title, subtitle, headers, rows, orientation = 'landscape' }: PdfExportOptions) {
+export async function exportToPdf({ fileName, title, subtitle, headers, rows, orientation = 'landscape' }: PdfExportOptions) {
   const doc = new jsPDF({ orientation, unit: 'mm', format: 'a4' });
 
   // Title
@@ -84,7 +138,16 @@ export function exportToPdf({ fileName, title, subtitle, headers, rows, orientat
     margin: { top: 10, right: 14, bottom: 10, left: 14 },
   });
 
-  doc.save(`${fileName}.pdf`);
+  const fullName = `${fileName}.pdf`;
+
+  if (isNativeMobile()) {
+    // Generate as base64 for native
+    const base64 = doc.output('datauristring').split(',')[1];
+    await saveFileNative(fullName, base64, 'application/pdf');
+  } else {
+    // Browser download
+    doc.save(fullName);
+  }
 }
 
 // ──────────────────────────────────────────────
