@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { Gauge, ArrowRight, AlertTriangle, ArrowLeft } from 'lucide-react';
 import { connectSocket, getSocket } from '@/utils/socket';
+import PullToRefresh from '../components/PullToRefresh';
 import { IonSelect, IonSelectOption } from '@ionic/react';
 
 interface ClientInfo {
@@ -72,60 +73,62 @@ export default function MapPage() {
   const [showParameters, setShowParameters] = useState<Record<string, boolean>>({});
   const [latestData, setLatestData] = useState<Record<string, SensorData>>({});
 
+  const loadMapData = async () => {
+    if (!clientCode) return;
+    try {
+      setLoading(true);
+      const [clientRes, locationsRes, paramsRes] = await Promise.all([
+        getClientByCode(clientCode),
+        getLocations(undefined, clientCode),
+        getParameters(undefined, clientCode)
+      ]);
+      setClient(clientRes.data);
+      setLocations(locationsRes.data);
+      const grouped: Record<string, Parameter[]> = {};
+      (paramsRes.data || []).forEach((param: Parameter) => {
+        const locId = typeof param.locationId === 'string'
+          ? param.locationId
+          : param.locationId?._id;
+        if (!locId) return;
+        if (!grouped[locId]) grouped[locId] = [];
+        grouped[locId].push(param);
+      });
+      setParametersByLocation(grouped);
+      const setpointsMap: Record<string, Setpoint[]> = {};
+      await Promise.all(
+        (paramsRes.data || []).map(async (param: Parameter) => {
+          try {
+            const res = await getSetpoints(param._id, clientCode);
+            setpointsMap[param._id] = res.data || [];
+          } catch {
+            setpointsMap[param._id] = [];
+          }
+        })
+      );
+      setSetpointsByParameter(setpointsMap);
+      const markersFromDb = (clientRes.data.mapMarkers || []).reduce(
+        (acc: Record<string, MapMarker>, marker: { locationId: string; xPercent: number; yPercent: number }) => {
+          acc[marker.locationId] = { xPercent: marker.xPercent, yPercent: marker.yPercent };
+          return acc;
+        },
+        {}
+      );
+      setMarkers(markersFromDb);
+      const showAll: Record<string, boolean> = {};
+      Object.keys(markersFromDb).forEach((locId) => {
+        showAll[locId] = true;
+      });
+      setShowParameters(showAll);
+    } catch (error) {
+      console.error('Error loading map data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!clientCode) return;
-    const load = async () => {
-      try {
-        setLoading(true);
-        const [clientRes, locationsRes, paramsRes] = await Promise.all([
-          getClientByCode(clientCode),
-          getLocations(undefined, clientCode),
-          getParameters(undefined, clientCode)
-        ]);
-        setClient(clientRes.data);
-        setLocations(locationsRes.data);
-        const grouped: Record<string, Parameter[]> = {};
-        (paramsRes.data || []).forEach((param: Parameter) => {
-          const locId = typeof param.locationId === 'string'
-            ? param.locationId
-            : param.locationId?._id;
-          if (!locId) return;
-          if (!grouped[locId]) grouped[locId] = [];
-          grouped[locId].push(param);
-        });
-        setParametersByLocation(grouped);
-        const setpointsMap: Record<string, Setpoint[]> = {};
-        await Promise.all(
-          (paramsRes.data || []).map(async (param: Parameter) => {
-            try {
-              const res = await getSetpoints(param._id, clientCode);
-              setpointsMap[param._id] = res.data || [];
-            } catch {
-              setpointsMap[param._id] = [];
-            }
-          })
-        );
-        setSetpointsByParameter(setpointsMap);
-        const markersFromDb = (clientRes.data.mapMarkers || []).reduce(
-          (acc: Record<string, MapMarker>, marker: { locationId: string; xPercent: number; yPercent: number }) => {
-            acc[marker.locationId] = { xPercent: marker.xPercent, yPercent: marker.yPercent };
-            return acc;
-          },
-          {}
-        );
-        setMarkers(markersFromDb);
-        const showAll: Record<string, boolean> = {};
-        Object.keys(markersFromDb).forEach((locId) => {
-          showAll[locId] = true;
-        });
-        setShowParameters(showAll);
-      } catch (error) {
-        console.error('Error loading map data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+    loadMapData();
   }, [clientCode]);
 
   useEffect(() => {
@@ -219,6 +222,7 @@ export default function MapPage() {
   }
 
   return (
+    <PullToRefresh onRefresh={loadMapData}>
     <div className="space-y-4 flex flex-col h-full w-full">
       {/* Header - Full Width */}
       <div className="w-screen bg-background relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
@@ -408,5 +412,6 @@ export default function MapPage() {
         </Card>
       )}
     </div>
+    </PullToRefresh>
   );
 }

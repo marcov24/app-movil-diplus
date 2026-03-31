@@ -20,6 +20,7 @@ import { connectSocket, getSocket } from '../utils/socket';
 import { AlertsSkeleton } from '../components/Skeletons';
 import { useAlertsContext } from '../contexts/AlertsContext';
 import { exportToExcel, exportToPdf, formatAlertsForExport } from '../utils/exportUtils';
+import PullToRefresh from '../components/PullToRefresh';
 
 interface Alert {
   _id: string;
@@ -220,7 +221,12 @@ export default function Alerts() {
     return <AlertsSkeleton />;
   }
 
+  const handleRefresh = async () => {
+    await Promise.all([loadAlerts(true), loadStats()]);
+  };
+
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <div className="space-y-4 md:space-y-8 w-full">
       {/* Header - Full Width */}
       <div className="w-screen bg-background relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
@@ -562,6 +568,7 @@ export default function Alerts() {
         </CardContent>
       </Card>
     </div>
+    </PullToRefresh>
   );
 }
 

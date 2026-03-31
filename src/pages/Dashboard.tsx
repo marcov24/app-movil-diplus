@@ -14,6 +14,7 @@ import { Link } from 'react-router-dom';
 import { AreaChart, Area as RechartsArea, ResponsiveContainer } from 'recharts';
 import Areas from './Areas';
 import { DashboardSkeleton } from '../components/Skeletons';
+import PullToRefresh from '../components/PullToRefresh';
 
 interface Area {
   _id: string;
@@ -467,7 +468,12 @@ export default function Dashboard() {
   }
 
 
+  const handleRefresh = async () => {
+    await Promise.all([loadData(), loadMqttStatus()]);
+  };
+
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <div className="space-y-4 md:space-y-8 w-full">
       {/* Header - Full Width */}
       <div className="w-screen bg-background relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
@@ -1009,6 +1015,7 @@ export default function Dashboard() {
           </div>
         </>
       )}
-    </div >
+    </div>
+    </PullToRefresh>
   );
 }

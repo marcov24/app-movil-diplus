@@ -17,6 +17,7 @@ import HighchartsReact from 'highcharts-react-official';
 import { io, Socket } from 'socket.io-client';
 import { SOCKET_URL } from '../utils/api';
 import { exportToExcel, exportToPdf, formatAnalysisForExport } from '../utils/exportUtils';
+import PullToRefresh from '../components/PullToRefresh';
 
 interface Parameter {
   _id: string;
@@ -400,7 +401,12 @@ export default function Analysis() {
   } : null;
   const decimals = parameter.decimals ?? 2;
 
+  const handleRefresh = async () => {
+    await Promise.all([loadParameter(), loadSetpoints(), loadData()]);
+  };
+
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <div className="space-y-4 md:space-y-6">
       <div>
         <div className="flex items-center space-x-2 sm:space-x-3 mb-2 sm:mb-3">
@@ -789,5 +795,6 @@ export default function Analysis() {
         )}
       </div>
     </div>
+    </PullToRefresh>
   );
 }

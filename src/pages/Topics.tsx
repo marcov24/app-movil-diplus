@@ -5,6 +5,7 @@ import { getActiveTopics, getClientByCode } from '../utils/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ListSkeleton } from '../components/Skeletons';
 import { Radio, ArrowLeft } from 'lucide-react';
+import PullToRefresh from '../components/PullToRefresh';
 
 export default function Topics() {
   const history = useHistory();
@@ -46,6 +47,7 @@ export default function Topics() {
   }
 
   return (
+    <PullToRefresh onRefresh={loadTopics}>
     <div className="space-y-4 flex flex-col h-full w-full">
       {/* Header - Full Width */}
       <div className="w-screen bg-background relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
@@ -122,5 +124,6 @@ export default function Topics() {
         </CardContent>
       </Card>
     </div>
+    </PullToRefresh>
   );
 }

@@ -8,6 +8,7 @@ import { ListSkeleton } from '../components/Skeletons';
 import { cn } from '@/lib/utils';
 import { useToast, ToastContainer } from '@/components/ui/toast';
 import { DeleteConfirmModal } from '@/components/DeleteConfirmModal';
+import PullToRefresh from '../components/PullToRefresh';
 
 interface Client {
   _id: string;
@@ -419,7 +420,12 @@ export default function Clients() {
     return <ListSkeleton count={3} />;
   }
 
+  const handleRefresh = async () => {
+    await Promise.all([loadClients(), loadMqttStatuses()]);
+  };
+
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <div className="space-y-5">
       {/* Header */}
       <div>
@@ -1138,5 +1144,6 @@ export default function Clients() {
         description={deleteModalState.type === 'map' ? 'El mapa del cliente será removido' : 'Remover dato seleccionado'}
       />
     </div>
+    </PullToRefresh>
   );
 }
