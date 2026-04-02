@@ -3,12 +3,13 @@ import { useHistory } from 'react-router-dom';
 import { resolveAlert, getClientByCode } from '../utils/api';
 import { createApiClient } from '../utils/apiClient';
 import { useClient } from '../hooks/useClient';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+// import { Button } from '@/components/ui/button';
 
 import { Label } from '@/components/ui/label';
-import { AlertTriangle, CheckCircle2, Loader2, Filter, RefreshCw, Calendar, ArrowLeft, Download, FileSpreadsheet, FileText } from 'lucide-react';
-import { IonSelect, IonSelectOption, IonButton, IonList, IonItemSliding, IonItem, IonItemOptions, IonItemOption } from '@ionic/react';
+import { AlertTriangle, CheckCircle2, Loader2, RefreshCw, Calendar, ArrowLeft, Download, FileSpreadsheet, FileText } from 'lucide-react';
+import { IonSelect, IonSelectOption, IonButton, IonList, IonItemSliding, IonItem, IonItemOptions, IonItemOption, IonAccordion, IonAccordionGroup, IonModal } from '@ionic/react';
+import { FaSliders } from 'react-icons/fa6';
 import { DateRange } from 'react-date-range';
 import type { RangeKeyDict } from 'react-date-range';
 import { format } from 'date-fns';
@@ -76,15 +77,7 @@ export default function Alerts() {
 
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
-        setShowDatePicker(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+
 
   const applyDateRange = () => {
     const sDate = format(calendarRange[0].startDate, 'yyyy-MM-dd');
@@ -310,159 +303,189 @@ export default function Alerts() {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* iOS Style Summary Widgets */}
       {stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-[#51E8D4]/10 border-[#51E8D4] flex flex-col justify-center">
-            <CardHeader className="pb-2">
-              <CardDescription className="text-[#0091A0]">Total</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-[#0091A0]">{stats.total}</div>
-            </CardContent>
-          </Card>
-          <Card className="bg-[#EF4444]/10 border-[#EF4444] flex flex-col justify-center">
-            <CardHeader className="pb-2">
-              <CardDescription className="text-[#EF4444]">Sin Resolver</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-[#EF4444]">{stats.unresolved}</div>
-            </CardContent>
-          </Card>
-          <Card className="bg-[#3eaa76]/10 border-[#3eaa76] flex flex-col justify-center">
-            <CardHeader className="pb-2">
-              <CardDescription className="text-[#3eaa76]">Resueltas</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-[#3eaa76]">{stats.resolved}</div>
-            </CardContent>
-          </Card>
-          <Card className="bg-[#0091A0]/10 border-[#0091A0] flex flex-col justify-center">
-            <CardHeader className="pb-2">
-              <CardDescription className="text-[#0091A0]">Hoy</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-[#0091A0]">{stats.today}</div>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 px-1 sm:px-0">
+          {/* Total Widget */}
+          <div className="bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-950/40 dark:to-blue-900/20 rounded-[24px] p-4 sm:p-5 flex flex-col relative overflow-hidden group border border-cyan-100/50 dark:border-cyan-800/30 shadow-[0_8px_20px_rgb(0,145,160,0.04)]">
+            <div className="absolute -right-4 -top-4 w-20 h-20 bg-cyan-400/10 dark:bg-cyan-400/5 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+            <span className="text-cyan-600/90 dark:text-cyan-400 font-extrabold text-[11px] sm:text-[13px] uppercase tracking-wider mb-1 z-10">Total</span>
+            <span className="text-3xl sm:text-4xl font-black text-cyan-700 dark:text-cyan-300 tracking-tight z-10">{stats.total}</span>
+          </div>
+          
+          {/* Sin Resolver Widget */}
+          <div className="bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/40 dark:to-rose-900/20 rounded-[24px] p-4 sm:p-5 flex flex-col relative overflow-hidden group border border-red-100/50 dark:border-red-800/30 shadow-[0_8px_20px_rgb(239,68,68,0.06)]">
+            <div className="absolute -right-4 -top-4 w-20 h-20 bg-red-400/10 dark:bg-red-400/5 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+            <span className="text-red-500/90 dark:text-red-400 font-extrabold text-[11px] sm:text-[13px] uppercase tracking-wider mb-1 z-10">Sin Resolver</span>
+            <span className="text-3xl sm:text-4xl font-black text-red-600 dark:text-red-300 tracking-tight z-10">{stats.unresolved}</span>
+          </div>
+
+          {/* Resueltas Widget */}
+          <div className="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/40 dark:to-green-900/20 rounded-[24px] p-4 sm:p-5 flex flex-col relative overflow-hidden group border border-emerald-100/50 dark:border-emerald-800/30 shadow-[0_8px_20px_rgb(62,170,118,0.04)]">
+            <div className="absolute -right-4 -top-4 w-20 h-20 bg-emerald-400/10 dark:bg-emerald-400/5 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+            <span className="text-emerald-600/90 dark:text-emerald-400 font-extrabold text-[11px] sm:text-[13px] uppercase tracking-wider mb-1 z-10">Resueltas</span>
+            <span className="text-3xl sm:text-4xl font-black text-emerald-700 dark:text-emerald-300 tracking-tight z-10">{stats.resolved}</span>
+          </div>
+
+          {/* Hoy Widget */}
+          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/40 dark:to-purple-900/20 rounded-[24px] p-4 sm:p-5 flex flex-col relative overflow-hidden group border border-indigo-100/50 dark:border-indigo-800/30 shadow-[0_8px_20px_rgb(79,70,229,0.04)]">
+            <div className="absolute -right-4 -top-4 w-20 h-20 bg-indigo-400/10 dark:bg-indigo-400/5 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+            <span className="text-indigo-500/90 dark:text-indigo-400 font-extrabold text-[11px] sm:text-[13px] uppercase tracking-wider mb-1 z-10">Hoy</span>
+            <span className="text-3xl sm:text-4xl font-black text-indigo-600 dark:text-indigo-300 tracking-tight z-10">{stats.today}</span>
+          </div>
         </div>
       )}
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Filter className="w-5 h-5" />
-            <span>Filtros</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <Label>Estado</Label>
-              <div className="flex h-10 w-full items-center rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-within:ring-1 focus-within:ring-ring mt-1.5">
-                <IonSelect
-                  value={isResolved}
-                  onIonChange={(e) => { setIsResolved(e.detail.value); handleFilterChange(); }}
-                  interface="popover"
-                  className="w-full [--padding-start:0] [--padding-end:0] text-sm"
-                >
-                  <IonSelectOption value="all">Todos</IonSelectOption>
-                  <IonSelectOption value="false">Sin Resolver</IonSelectOption>
-                  <IonSelectOption value="true">Resueltas</IonSelectOption>
-                </IonSelect>
+      {/* Filters (Compact Accordion) */}
+      <Card className="overflow-hidden border border-slate-100/60 dark:border-slate-800 shadow-[0_4px_20px_rgb(0,0,0,0.03)] rounded-[20px]">
+        <IonAccordionGroup>
+          <IonAccordion value="filters" className="bg-white dark:bg-gray-800 m-0">
+            <IonItem slot="header" lines="none" className="[--background:transparent] [--background-hover:transparent] hover:bg-slate-50 dark:hover:bg-slate-700/20 transition-colors cursor-pointer py-1">
+              <div className="flex items-center gap-3 w-full">
+                <div className="p-2 bg-slate-100 dark:bg-slate-700/50 rounded-xl text-slate-600 dark:text-slate-300">
+                  <FaSliders className="w-[18px] h-[18px]" />
+                </div>
+                <span className="font-extrabold text-[15px] sm:text-[16px] text-slate-800 dark:text-white tracking-tight">Filtros</span>
               </div>
-            </div>
-            <div>
-              <Label>Condición</Label>
-              <div className="flex h-10 w-full items-center rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-within:ring-1 focus-within:ring-ring mt-1.5">
-                <IonSelect
-                  value={condition}
-                  onIonChange={(e) => setCondition(e.detail.value)}
-                  interface="popover"
-                  className="w-full [--padding-start:0] [--padding-end:0] text-sm"
-                >
-                  <IonSelectOption value="all">Todas</IonSelectOption>
-                  <IonSelectOption value="critical">Crítico</IonSelectOption>
-                  <IonSelectOption value="warning">Advertencia</IonSelectOption>
-                  <IonSelectOption value="normal">Normal</IonSelectOption>
-                </IonSelect>
-              </div>
-            </div>
-            <div className="col-span-1 md:col-span-2">
-              <Label>Rango de Fechas</Label>
-              <div className="relative mt-1.5" ref={datePickerRef}>
-                <IonButton
-                  fill="clear"
-                  onClick={() => setShowDatePicker(!showDatePicker)}
-                  className="w-full h-10 border border-input rounded-md bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm normal-case"
-                >
-                  <div className="w-full flex items-center justify-between gap-3 px-1 text-sm text-gray-700 dark:text-gray-200">
-                    <div className="flex items-center gap-2">
-                      <Calendar size={16} className="text-muted-foreground shrink-0" />
-                      <span className="font-medium">
-                        {startDate && endDate
-                          ? `${format(new Date(startDate + 'T00:00:00'), 'dd/MM/yyyy')} — ${format(new Date(endDate + 'T00:00:00'), 'dd/MM/yyyy')}`
-                          : 'Seleccione un rango'}
-                      </span>
-                    </div>
+            </IonItem>
+            
+            <div slot="content" className="px-5 pb-6 pt-2 border-t border-slate-100 dark:border-slate-700/60 font-sans">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <Label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Estado</Label>
+                  <div className="flex h-11 w-full items-center rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 px-3 py-1 shadow-sm transition-all focus-within:ring-2 focus-within:ring-[#3eaa76]/20 mt-1.5 hover:border-slate-300">
+                    <IonSelect
+                      value={isResolved}
+                      onIonChange={(e) => { setIsResolved(e.detail.value); handleFilterChange(); }}
+                      interface="popover"
+                      className="w-full text-[14px] font-semibold text-slate-700 dark:text-slate-200 focus:outline-none"
+                    >
+                      <IonSelectOption value="all">Todos</IonSelectOption>
+                      <IonSelectOption value="false">Sin Resolver</IonSelectOption>
+                      <IonSelectOption value="true">Resueltas</IonSelectOption>
+                    </IonSelect>
                   </div>
-                </IonButton>
-                {showDatePicker && (
-                  <div className="absolute z-50 mt-2 left-0 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden date-range-wrapper min-w-[320px]">
-                    <DateRange
-                      ranges={calendarRange}
-                      onChange={(item: RangeKeyDict) => setCalendarRange([item.selection as { startDate: Date; endDate: Date; key: string }])}
-                      moveRangeOnFirstSelection={false}
-                      months={1}
-                      direction="vertical"
-                      rangeColors={['#3eaa76']}
-                      locale={es}
-                      dateDisplayFormat="dd/MM/yyyy"
-                      maxDate={new Date()}
-                    />
-                    <div className="flex justify-end p-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                      <IonButton
-                        onClick={applyDateRange}
-                        className="text-sm font-semibold m-0 normal-case shadow-sm"
-                        style={{ '--background': '#3eaa76', '--border-radius': '8px', 'height': '36px' }}
-                      >
-                        Aplicar Filtro
-                      </IonButton>
-                    </div>
+                </div>
+                
+                <div>
+                  <Label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Condición</Label>
+                  <div className="flex h-11 w-full items-center rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 px-3 py-1 shadow-sm transition-colors focus-within:ring-2 focus-within:ring-[#3eaa76]/20 mt-1.5 hover:border-slate-300">
+                    <IonSelect
+                      value={condition}
+                      onIonChange={(e) => setCondition(e.detail.value)}
+                      interface="popover"
+                      className="w-full text-[14px] font-semibold text-slate-700 dark:text-slate-200 focus:outline-none"
+                    >
+                      <IonSelectOption value="all">Todas</IonSelectOption>
+                      <IonSelectOption value="critical">Crítico</IonSelectOption>
+                      <IonSelectOption value="warning">Advertencia</IonSelectOption>
+                      <IonSelectOption value="normal">Normal</IonSelectOption>
+                    </IonSelect>
                   </div>
-                )}
+                </div>
+                
+                <div className="col-span-1 md:col-span-2">
+                  <Label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Rango de Fechas</Label>
+                  <div className="relative mt-1.5" ref={datePickerRef}>
+                    <IonButton
+                      fill="clear"
+                      onClick={() => setShowDatePicker(true)}
+                      className="w-full h-11 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-900/40 transition-all shadow-sm m-0 normal-case"
+                      style={{ '--border-radius': '12px' }}
+                    >
+                      <div className="w-full flex items-center justify-start gap-3 px-1 text-slate-700 dark:text-slate-200">
+                        <Calendar size={18} className="text-slate-400 shrink-0" />
+                        <span className="font-semibold text-[14px]">
+                          {startDate && endDate
+                            ? `${format(new Date(startDate + 'T00:00:00'), 'dd/MM/yyyy')} — ${format(new Date(endDate + 'T00:00:00'), 'dd/MM/yyyy')}`
+                            : 'Seleccione un rango'}
+                        </span>
+                      </div>
+                    </IonButton>
+                    
+                    <IonModal
+                      isOpen={showDatePicker}
+                      onDidDismiss={() => setShowDatePicker(false)}
+                      initialBreakpoint={0.7}
+                      breakpoints={[0, 0.7, 0.9]}
+                      className="date-modal custom-bottom-sheet"
+                    >
+                      <div className="bg-white dark:bg-gray-800 w-full h-full p-5 overflow-y-auto flex flex-col items-center">
+                        <div className="w-full max-w-[340px] mx-auto">
+                          <h3 className="text-lg font-extrabold text-slate-800 dark:text-white mb-4 mt-2">Rango de fechas</h3>
+                          <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <DateRange
+                              ranges={calendarRange}
+                              onChange={(item: RangeKeyDict) => setCalendarRange([item.selection as { startDate: Date; endDate: Date; key: string }])}
+                              moveRangeOnFirstSelection={false}
+                              months={1}
+                              direction="vertical"
+                              rangeColors={['#3eaa76']}
+                              locale={es}
+                              dateDisplayFormat="dd/MM/yyyy"
+                              maxDate={new Date()}
+                            />
+                          </div>
+                          <IonButton
+                            expand="block"
+                            onClick={applyDateRange}
+                            className="w-full mt-6 m-0 normal-case shadow-md text-[16px] font-bold tracking-wide"
+                            style={{
+                              '--background': '#3eaa76',
+                              '--background-hover': '#2e825a',
+                              '--border-radius': '12px',
+                              '--padding-top': '18px',
+                              '--padding-bottom': '18px',
+                              '--box-shadow': 'none'
+                            } as React.CSSProperties}
+                          >
+                            Aplicar Filtro
+                          </IonButton>
+                        </div>
+                      </div>
+                    </IonModal>
+                  </div>
+                </div>
               </div>
+              
+              <button
+                onClick={() => {
+                  setStartDate('');
+                  setEndDate('');
+                  setCalendarRange([{ startDate: new Date(), endDate: new Date(), key: 'selection' }]);
+                  setIsResolved('false');
+                  setCondition('all');
+                  setTimeout(() => handleFilterChange(), 50);
+                }}
+                className="mt-5 flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 hover:text-slate-900 transition-colors active:scale-95 mx-auto md:mx-0 w-full md:w-auto"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Limpiar Filtros
+              </button>
             </div>
-          </div>
-          <Button
-            onClick={() => {
-              setStartDate('');
-              setEndDate('');
-              setCalendarRange([{ startDate: new Date(), endDate: new Date(), key: 'selection' }]);
-              setIsResolved('false');
-              setCondition('all');
-              setTimeout(() => handleFilterChange(), 50);
-            }}
-            variant="outline"
-            className="mt-4"
-          >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Limpiar Filtros
-          </Button>
-        </CardContent>
+          </IonAccordion>
+        </IonAccordionGroup>
       </Card>
 
       {/* Alerts List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Alertas ({alerts.length})</CardTitle>
+      <Card className="border-none shadow-[0_4px_20px_rgb(0,0,0,0.03)] rounded-[20px] bg-white dark:bg-gray-800 overflow-hidden mb-6">
+        <CardHeader className="pb-4 pt-5 px-5">
+          <CardTitle className="text-[18px] sm:text-[20px] font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
+            Alertas <span className="text-slate-400 bg-slate-100 rounded-full px-2.5 py-0.5 text-[12px] font-bold">{alerts.length}</span>
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-5 pb-5">
           {alerts.length === 0 ? (
-            <div className="text-center py-12">
-              <CheckCircle2 className="w-16 h-16 mx-auto text-green-500 mb-4" />
-              <p className="text-muted-foreground">No hay alertas disponibles</p>
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              <div className="w-24 h-24 mb-6 rounded-[28px] bg-gradient-to-br from-[#e4fcfa] to-[#3eaa76]/10 flex items-center justify-center shadow-[0_0_40px_rgba(62,170,118,0.2)] dark:shadow-none animate-in fade-in zoom-in duration-500">
+                <div className="w-[60px] h-[60px] rounded-[20px] bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm">
+                  <CheckCircle2 className="w-8 h-8 text-[#3eaa76]" />
+                </div>
+              </div>
+              <h3 className="text-2xl font-extrabold text-slate-800 dark:text-white mb-2 tracking-tight">¡Todo bajo control!</h3>
+              <p className="text-[14px] text-slate-500 dark:text-slate-400 text-center max-w-[280px] leading-relaxed font-medium">
+                Tu sistema no reporta ninguna alerta pendiente bajo estos filtros.
+              </p>
             </div>
           ) : (
             <IonList
