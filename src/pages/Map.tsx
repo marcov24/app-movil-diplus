@@ -5,8 +5,8 @@ import { useHistory } from 'react-router-dom';
 import { getClientByCode, getLocations, getParameters, getSetpoints, updateClientMapMarkersByCode } from '../utils/api';
 import { useClient } from '@/hooks/useClient';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Gauge, ArrowRight, AlertTriangle, ArrowLeft } from 'lucide-react';
+
+import { Gauge, ArrowRight, AlertTriangle, ArrowLeft, Map as MapIcon, Info } from 'lucide-react';
 import { connectSocket, getSocket } from '@/utils/socket';
 import PullToRefresh from '../components/PullToRefresh';
 import { IonSelect, IonSelectOption } from '@ionic/react';
@@ -241,33 +241,32 @@ export default function MapPage() {
           </div>
         )}
 
-        <div className="w-full flex flex-col px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 pt-3 pb-3">
-          <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-foreground leading-none">
+        <div className="w-full flex flex-col px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 pt-3 pb-2">
+          <h2 className="text-2xl font-extrabold tracking-tight text-slate-800 leading-none mb-3">
             Mapa
           </h2>
-          <p className="text-sm text-muted-foreground mt-2">
-            Seleccione una ubicación y haga doble clic sobre el mapa para ver sus parámetros.
-          </p>
+          <div className="inline-flex items-start sm:items-center gap-2 bg-blue-50/50 text-blue-700 px-3 py-2 rounded-lg border border-blue-100 w-fit max-w-full">
+            <Info className="w-4 h-4 shrink-0 mt-0.5 sm:mt-0 opacity-80" />
+            <p className="text-[13px] font-medium leading-snug">
+              Seleccione una ubicación y haga <strong className="font-extrabold">doble clic</strong> sobre el mapa para ver sus parámetros.
+            </p>
+          </div>
         </div>
       </div>
 
       <div className="space-y-6">
-        <Card className="min-h-[60vh] h-[calc(100vh-260px)] flex flex-col border border-border shadow-sm rounded-xl overflow-hidden">
-          <CardHeader className="bg-[#f0f9f8] border-b border-gray-100 pb-4 pt-5 ">
+        <Card className="min-h-[60vh] h-[calc(100vh-260px)] flex flex-col border-none shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[20px] overflow-hidden bg-white">
+          <CardHeader className="bg-white pb-4 pt-5 px-5">
             <div className="flex flex-row items-center justify-between gap-4">
               <div>
-                <CardTitle className="text-2xl font-bold text-[#111827]">Mapa del Cliente</CardTitle>
-                <CardDescription className="text-sm font-semibold text-gray-500 mt-0.5">
+                <CardDescription className="text-xs font-bold text-[#3eaa76] uppercase tracking-wider mb-1">
                   {client?.name || 'Cliente'}
                 </CardDescription>
+                <CardTitle className="text-[20px] font-extrabold text-slate-800 tracking-tight">Mapa del Cliente</CardTitle>
               </div>
-              <div className="flex-1 max-w-[220px] shrink-0">
-                <div className="flex justify-end mb-1">
-                  <Label htmlFor="map-location" className="text-[11px] font-bold text-gray-600 block">
-                    Ubicaciones
-                  </Label>
-                </div>
-                <div className="w-full bg-white rounded-md shadow-sm border border-gray-200">
+              <div className="flex-1 max-w-[200px] shrink-0">
+                <div className="w-full bg-slate-50 hover:bg-slate-100 transition-colors rounded-xl border border-slate-200 shadow-sm focus-within:ring-2 focus-within:ring-[#3eaa76]/20 focus-within:border-[#3eaa76]/30 relative overflow-hidden">
+                  <div className="absolute top-1.5 left-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest pointer-events-none z-10">Ubicaciones</div>
                   <IonSelect
                     id="map-location"
                     value={selectedLocationId}
@@ -275,8 +274,8 @@ export default function MapPage() {
                       setSelectedLocationId(e.detail.value);
                       setShowParameters({});
                     }}
-                    placeholder="Seleccione ubicación"
-                    className="flex min-h-[40px] w-full px-3 py-0 text-[13px] text-gray-700 focus:outline-none transition-all font-sans"
+                    placeholder="Escoger..."
+                    className="flex min-h-[48px] w-full px-3 pt-4 pb-0 text-[14px] font-semibold text-slate-700 focus:outline-none transition-all font-sans"
                     interface="popover"
                   >
                     {locations.map((location) => (
@@ -384,8 +383,14 @@ export default function MapPage() {
                 })}
               </div>
             ) : (
-              <div className="flex items-center justify-center w-full h-full rounded-md border border-gray-200 bg-white text-sm text-[#1e293b]">
-                No hay mapa cargado para este cliente.
+              <div className="flex flex-col items-center justify-center w-full h-full min-h-[50vh] bg-slate-50/50">
+                <div className="p-4 bg-white rounded-full shadow-sm mb-4">
+                  <MapIcon className="w-10 h-10 text-slate-300 stroke-[1.5]" />
+                </div>
+                <h3 className="text-[17px] font-semibold text-slate-700">Mapa no disponible</h3>
+                <p className="text-[14px] text-slate-500 max-w-[300px] text-center mt-1.5 leading-relaxed">
+                  Este cliente aún no tiene un mapa cargado en el sistema.
+                </p>
               </div>
             )}
           </CardContent>
@@ -393,8 +398,8 @@ export default function MapPage() {
       </div>
 
       {Object.keys(markers).length === 0 && (
-        <Card>
-          <CardHeader className="bg-[#0091A0]/10 border-b">
+        <Card className="border-none shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[20px] bg-white">
+          <CardHeader className="bg-gradient-to-r from-teal-50/50 to-white pb-4 pt-5 px-5">
             <CardTitle className="flex items-center gap-2">
               <Gauge className="w-4 h-4" />
               Parámetros en el mapa
